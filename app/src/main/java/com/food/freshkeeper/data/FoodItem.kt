@@ -81,9 +81,15 @@ data class FoodItem(
         return when {
             days < 0 -> FoodStatus.EXPIRED
             days == 0 -> FoodStatus.EXPIRING_TODAY
-            days <= 2 -> FoodStatus.URGENT
-            days <= 5 -> FoodStatus.WARNING
+            days <= 7 -> FoodStatus.URGENT
             else -> FoodStatus.FRESH
         }
+    }
+
+    /**
+     * 是否处于紧急临期状态 (0..7天且未消灭)
+     */
+    fun isUrgent(nowMs: Long = System.currentTimeMillis()): Boolean {
+        return !isConsumed && remainingDays(nowMs) in 0..7
     }
 }

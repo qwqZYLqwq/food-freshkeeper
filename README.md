@@ -4,6 +4,27 @@
 
 ---
 
+## 🆕 V1.3.0 版本更新日志
+
+- 🧹 **示范食材策略调整与智能管理 (R1)**：
+  - 彻底移除应用冷启动与数据库初始化时自动生成示范食材的逻辑。清空食材后彻底放空，重启应用不再自动恢复已删示范数据。
+  - 在「设置」界面数据管理区提供手动「添加示范食材」入口，带二次防误触确认与即时反馈，满足新手体验与数据测试需求。
+- ⏰ **7 天临期待吃预警与视觉导航优化 (R2)**：
+  - 扩展紧急临期提醒判定区间：由原先的 2 天内大幅拓宽至 7 天内（剩余保质期在 0..7 天内的未食用食材均归入「临期待吃 / 紧急临期」预警范围）。
+  - 首页头部与「🔥 抓紧消灭专区」实时汇聚并醒目提示 7 天内待消灭食材，帮助合理规划烹饪。
+  - 修正底部四大主导航（首页、清单、妙招、设置）之间的平移动画方向逻辑：记录前后导航位次，从左往右点击向左滑入，从右往左点击向右滑入，完全符合物理空间视觉直觉。
+- 📦 **云端图片同步与离线 ZIP 数据包无损迁移 (R3)**：
+  - 云端轻量同步全面升级：支持食材实物照片的 Base64 压缩编解码双向同步，云端拉取还原时精确统计在库、已食用、回收站食材恢复数量并直观提示。
+  - 新增本地离线数据包导入导出机制：基于 `BackupManager` 将全量食材结构化数据（JSON）与实物图片打包归档为标准 ZIP 离线迁移包，支持跨设备自由备份、恢复与无损迁移，且支持重复图片智能去重存储。
+- 📸 **食材实物拍照/相册双选与档案全屏大图预览 (R4)**：
+  - 食材录入与编辑（AddEditScreen）上传照片新增底部选择面板，支持调用系统相机现场拍摄或从系统相册选取，原生适配 Android `CAMERA` 运行时权限申请与优雅降级。
+  - 食材档案详情页（DetailScreen）新增实物照片点击放大全屏预览，支持双指手势缩放（1.0x ~ 4.0x）、双击快捷缩放、拖拽平移查看包装配料表与赏味期，轻触即时安全退出。
+- 🎨 **UI 紧凑排版优化与版本构建升级 (R5)**：
+  - 优化「设置」界面「临期预警阈值」快捷按钮排版（提供 1天/3天/5天/7天 等选项），采用单行紧凑自适应布局并禁用折行，彻底消除在小屏或大字体下的文字换行错位问题。
+  - 应用版本号正式升级至 V1.3 (`versionCode = 4`, `versionName = "1.3.0"`)，服务端同步升级至 1.3.0 协议规范。
+
+---
+
 ## 🆕 V1.2.0 版本更新日志
 
 - 🔄 **导航与防误触体验升级**：
@@ -77,7 +98,9 @@ PORT=8099 ./start.sh
 - **Architecture**: MVVM, Jetpack Lifecycle & ViewModel
 - **Database**: Room Database (SQLite)
 - **Local Storage**: Jetpack DataStore Preferences
-- **Network**: Android 原生 `HttpURLConnection` & `org.json`（轻量零外部依赖）
+- **Data Migration**: ZIP Archive Package (JSON + Images 去重打包与离线无损迁移)
+- **Network**: Android 原生 `HttpURLConnection` & `org.json`（支持 Base64 图片无缝同步）
+- **Media & Camera**: Android ActivityResultContracts (Camera & Photo Picker)
 - **Image Loader**: Coil Compose
 - **Backend**: Python 3 原生标准库 (`http.server`)
 - **Target SDK**: Android 14 (API 34), Min SDK: Android 8.0 (API 26)
@@ -86,4 +109,4 @@ PORT=8099 ./start.sh
 
 ## 📦 下载安装
 
-前往 [Releases 页面](https://github.com/qwqZYLqwq/food-freshkeeper/releases) 下载最新版本 `鲜食记_v1.2.0.apk` 即可直接安装体验。
+前往 [Releases 页面](https://github.com/qwqZYLqwq/food-freshkeeper/releases) 下载最新版本 `鲜食记_v1.3.0.apk` 即可直接安装体验。

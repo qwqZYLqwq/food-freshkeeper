@@ -26,29 +26,9 @@ abstract class FoodDatabase : RoomDatabase() {
                     "food_fresh_database"
                 )
                     .fallbackToDestructiveMigration()
-                    .addCallback(FoodDatabaseCallback(scope))
                     .build()
                 INSTANCE = instance
                 instance
-            }
-        }
-    }
-
-    private class FoodDatabaseCallback(
-        private val scope: CoroutineScope
-    ) : RoomDatabase.Callback() {
-        override fun onCreate(db: SupportSQLiteDatabase) {
-            super.onCreate(db)
-            INSTANCE?.let { database ->
-                scope.launch(Dispatchers.IO) {
-                    populateInitialData(database.foodDao())
-                }
-            }
-        }
-
-        private suspend fun populateInitialData(foodDao: FoodDao) {
-            if (foodDao.getCount() == 0) {
-                foodDao.insertAll(FoodDataPresets.createInitialMockFoods())
             }
         }
     }

@@ -1,7 +1,14 @@
 package com.food.freshkeeper.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -18,6 +25,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.food.freshkeeper.FoodViewModel
@@ -39,6 +48,7 @@ fun DetailScreen(
 ) {
     val food by viewModel.getFoodById(foodId).collectAsState(initial = null)
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showImagePreview by remember { mutableStateOf(false) }
 
     if (showDeleteConfirm && food != null) {
         AlertDialog(
@@ -125,9 +135,14 @@ fun DetailScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(100.dp)
-                                .clip(RoundedCornerShape(24.dp))
-                                .background(FreshGreenLight),
+                                .size(110.dp)
+                                .clip(RoundedCornerShape(26.dp))
+                                .background(FreshGreenLight)
+                                .then(
+                                    if (!item.imageUri.isNullOrBlank()) {
+                                        Modifier.clickable { showImagePreview = true }
+                                    } else Modifier
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             if (!item.imageUri.isNullOrBlank()) {
@@ -137,8 +152,23 @@ fun DetailScreen(
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
                                 )
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(4.dp)
+                                        .size(22.dp)
+                                        .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ZoomIn,
+                                        contentDescription = "查看大图",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                }
                             } else {
-                                Text(text = item.iconEmoji, fontSize = 52.sp)
+                                Text(text = item.iconEmoji, fontSize = 56.sp)
                             }
                         }
 
@@ -296,6 +326,130 @@ fun DetailScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
+    if (showImagePreview && food?.imageUri != null) {
+        var scale by remember { mutableFloatStateOf(1f) }
+        var offset by remember { mutableStateOf(Offset.Zero) }
+        val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
+            scale = (scale * zoomChange).coerceIn(1f, 4f)
+            if (scale > 1f) {
+                offset += panChange
+            } else {
+                offset = Offset.Zero
+            }
+        }
+
+        Dialog(
+            onDismissRequest = {
+                scale = 1f
+                offset = Offset.Zero
+                showImagePreview = false
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.94f))
+                    .clickable {
+                        scale = 1f
+                        offset = Offset.Zero
+                        showImagePreview = false
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // 顶部标题与关闭按钮
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 28.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = food!!.name,
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "食材实物档案照片 📸 (双指捏合或双击放大)",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 12.sp
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                scale = 1f
+                                offset = Offset.Zero
+                                showImagePreview = false
+                            },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = Color.White.copy(alpha = 0.2f),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "关闭预览")
+                        }
+                    }
+
+                    // 中间大图自适应展示 (支持手势缩放与双击缩放)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AsyncImage(
+                            model = food!!.imageUri,
+                            contentDescription = food!!.name,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .graphicsLayer(
+                                    scaleX = scale,
+                                    scaleY = scale,
+                                    translationX = offset.x,
+                                    translationY = offset.y
+                                )
+                                .transformable(state = transformableState)
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onDoubleTap = {
+                                            if (scale > 1.2f) {
+                                                scale = 1f
+                                                offset = Offset.Zero
+                                            } else {
+                                                scale = 2.5f
+                                            }
+                                        }
+                                    )
+                                }
+                                .clip(RoundedCornerShape(18.dp))
+                        )
+                    }
+
+                    // 底部提示
+                    Text(
+                        text = "双指缩放 · 双击切换放大 · 点击空白关闭",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
             }
         }
     }
