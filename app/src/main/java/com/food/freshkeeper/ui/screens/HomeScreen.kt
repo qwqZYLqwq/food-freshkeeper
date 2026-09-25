@@ -17,6 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import android.app.Activity
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,6 +38,18 @@ fun HomeScreen(
     navController: NavHostController,
     viewModel: FoodViewModel
 ) {
+    val context = LocalContext.current
+    var lastBackPressTime by remember { mutableLongStateOf(0L) }
+    BackHandler {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastBackPressTime < 2000L) {
+            (context as? Activity)?.finish()
+        } else {
+            lastBackPressTime = currentTime
+            Toast.makeText(context, "再按一次退出鲜食记", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val activeFoods by viewModel.activeFoods.collectAsState()
     val urgentFoods by viewModel.urgentFoods.collectAsState()
     val expiredFoods by viewModel.expiredFoods.collectAsState()
@@ -89,7 +105,11 @@ fun HomeScreen(
                     trashCount = trashFoods.size,
                     onUrgentClick = {
                         viewModel.setSelectedFilter("紧急临期")
-                        navController.navigate("list")
+                        navController.navigate("list") {
+                            popUpTo("home") { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                     onTrashClick = {
                         navController.navigate("trash")
@@ -151,7 +171,11 @@ fun HomeScreen(
                     activeFoods = activeFoods,
                     onSpaceClick = { spaceName ->
                         viewModel.setSelectedFilter(spaceName)
-                        navController.navigate("list")
+                        navController.navigate("list") {
+                            popUpTo("home") { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 )
             }
@@ -177,7 +201,11 @@ fun HomeScreen(
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.clickable {
                             viewModel.setSelectedFilter("全部")
-                            navController.navigate("list")
+                            navController.navigate("list") {
+                                popUpTo("home") { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
                     )
                 }

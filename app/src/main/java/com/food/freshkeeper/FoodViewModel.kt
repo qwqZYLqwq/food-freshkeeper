@@ -21,7 +21,37 @@ enum class SortOption(val title: String) {
 
 class FoodViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val foodDao: FoodDao
     private val repository: FoodRepository
+    private val settingsRepository = SettingsRepository(application)
+    private val syncClient = FoodSyncClient()
+
+    // 云端同步与设置状态流
+    val serverUrl: StateFlow<String> = settingsRepository.serverUrl.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        ""
+    )
+
+    val autoSyncEnabled: StateFlow<Boolean> = settingsRepository.autoSyncEnabled.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        false
+    )
+
+    val lastSyncTimeMs: StateFlow<Long> = settingsRepository.lastSyncTimeMs.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        0L
+    )
+
+    val defaultReminderDays: StateFlow<Int> = settingsRepository.defaultReminderDays.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        3
+    )
+
+    val isSyncing = MutableStateFlow(false)
 
     val allFoods: StateFlow<List<FoodItem>>
     val activeFoods: StateFlow<List<FoodItem>>
@@ -42,7 +72,8 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         val database = FoodDatabase.getDatabase(application, viewModelScope)
-        repository = FoodRepository(database.foodDao())
+        foodDao = database.foodDao()
+        repository = FoodRepository(foodDao)
 
         allFoods = repository.allFoods.stateIn(
             viewModelScope,
@@ -179,6 +210,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             viewModelScope.launch {
                 repository.moveToTrashBatch(idsToDelete)
                 exitBatchMode()
+                triggerAutoUploadIfEnabled()
             }
         }
     }
@@ -186,12 +218,14 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     fun addFood(food: FoodItem) {
         viewModelScope.launch {
             repository.insert(food)
+            triggerAutoUploadIfEnabled()
         }
     }
 
     fun updateFood(food: FoodItem) {
         viewModelScope.launch {
             repository.update(food)
+            triggerAutoUploadIfEnabled()
         }
     }
 
@@ -199,12 +233,14 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     fun moveToTrash(food: FoodItem) {
         viewModelScope.launch {
             repository.moveToTrash(food.id)
+            triggerAutoUploadIfEnabled()
         }
     }
 
     fun moveToTrashById(id: Long) {
         viewModelScope.launch {
             repository.moveToTrash(id)
+            triggerAutoUploadIfEnabled()
         }
     }
 
@@ -212,24 +248,28 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     fun restoreFromTrash(id: Long) {
         viewModelScope.launch {
             repository.restoreFromTrash(id)
+            triggerAutoUploadIfEnabled()
         }
     }
 
     fun restoreAllTrash() {
         viewModelScope.launch {
             repository.restoreAllTrash()
+            triggerAutoUploadIfEnabled()
         }
     }
 
     fun emptyTrash() {
         viewModelScope.launch {
             repository.emptyTrash()
+            triggerAutoUploadIfEnabled()
         }
     }
 
     fun deletePermanently(id: Long) {
         viewModelScope.launch {
             repository.deletePermanently(id)
+            triggerAutoUploadIfEnabled()
         }
     }
 
@@ -237,12 +277,14 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.markConsumed(food)
             celebratedFoodName.value = food.name
+            triggerAutoUploadIfEnabled()
         }
     }
 
     fun markActive(food: FoodItem) {
         viewModelScope.launch {
             repository.markActive(food)
+            triggerAutoUploadIfEnabled()
         }
     }
 
@@ -253,18 +295,136 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     fun resetSampleData() {
         viewModelScope.launch {
             repository.resetSampleData()
+            triggerAutoUploadIfEnabled()
         }
     }
 
     fun clearConsumed() {
         viewModelScope.launch {
             repository.clearConsumed()
+            triggerAutoUploadIfEnabled()
         }
     }
 
     fun clearExpired() {
         viewModelScope.launch {
             repository.clearExpired()
+            triggerAutoUploadIfEnabled()
+        }
+    }
+
+    private fun triggerAutoUploadIfEnabled() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val url = serverUrl.value
+                val enabled = autoSyncEnabled.value
+                if (!enabled || url.isBlank()) return@launch
+                val snapshot = foodDao.getAllFoodItemsSnapshot()
+                val result = syncClient.uploadFoods(url, snapshot)
+                if (result.isSuccess) {
+                    settingsRepository.setLastSyncTime(System.currentTimeMillis())
+                }
+            } catch (e: Exception) {
+                // 离线优先：自动同步失败静默忽略，绝不中断用户体验
+            }
+        }
+    }
+
+    // 设置与偏好操作
+    fun setServerUrl(url: String) {
+        viewModelScope.launch {
+            settingsRepository.setServerUrl(url)
+        }
+    }
+
+    fun setAutoSyncEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setAutoSyncEnabled(enabled)
+        }
+    }
+
+    fun setDefaultReminderDays(days: Int) {
+        viewModelScope.launch {
+            settingsRepository.setDefaultReminderDays(days)
+        }
+    }
+
+    // 手动网络同步操作
+    fun testConnection(targetUrl: String? = null, onResult: (Boolean, String) -> Unit) {
+        val urlToTest = targetUrl ?: serverUrl.value
+        if (urlToTest.isBlank()) {
+            onResult(false, "服务器地址不能为空")
+            return
+        }
+        viewModelScope.launch {
+            isSyncing.value = true
+            val result = syncClient.testConnection(urlToTest)
+            isSyncing.value = false
+            if (result.isSuccess) {
+                onResult(true, result.getOrDefault("连接成功"))
+            } else {
+                val errorMsg = result.exceptionOrNull()?.message ?: "无法连接到服务器"
+                onResult(false, errorMsg)
+            }
+        }
+    }
+
+    fun uploadBackup(onResult: (Boolean, String) -> Unit) {
+        val url = serverUrl.value
+        if (url.isBlank()) {
+            onResult(false, "请先配置服务器地址")
+            return
+        }
+        viewModelScope.launch {
+            isSyncing.value = true
+            try {
+                val snapshot = withContext(Dispatchers.IO) { foodDao.getAllFoodItemsSnapshot() }
+                val result = syncClient.uploadFoods(url, snapshot)
+                isSyncing.value = false
+                if (result.isSuccess) {
+                    val count = result.getOrDefault(snapshot.size)
+                    val now = System.currentTimeMillis()
+                    settingsRepository.setLastSyncTime(now)
+                    onResult(true, "上传成功，共备份 $count 项食材 ☁️")
+                } else {
+                    val err = result.exceptionOrNull()?.message ?: "上传失败"
+                    onResult(false, "上传失败: $err")
+                }
+            } catch (e: Exception) {
+                isSyncing.value = false
+                onResult(false, "上传异常: ${e.message}")
+            }
+        }
+    }
+
+    fun restoreFromCloud(onResult: (Boolean, String) -> Unit) {
+        val url = serverUrl.value
+        if (url.isBlank()) {
+            onResult(false, "请先配置服务器地址")
+            return
+        }
+        viewModelScope.launch {
+            isSyncing.value = true
+            try {
+                val result = syncClient.fetchFoods(url)
+                if (result.isSuccess) {
+                    val remoteFoods = result.getOrNull() ?: emptyList()
+                    withContext(Dispatchers.IO) {
+                        foodDao.insertAll(remoteFoods)
+                    }
+                    val now = System.currentTimeMillis()
+                    settingsRepository.setLastSyncTime(now)
+                    isSyncing.value = false
+                    onResult(true, "同步成功，已恢复 ${remoteFoods.size} 项食材 📥")
+                } else {
+                    isSyncing.value = false
+                    val err = result.exceptionOrNull()?.message ?: "拉取失败"
+                    onResult(false, "同步失败: $err")
+                }
+            } catch (e: Exception) {
+                isSyncing.value = false
+                onResult(false, "同步异常: ${e.message}")
+            }
         }
     }
 

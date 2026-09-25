@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -18,6 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -33,12 +36,18 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val trashFoods by viewModel.trashFoods.collectAsState()
+    val serverUrl by viewModel.serverUrl.collectAsState()
+    val autoSyncEnabled by viewModel.autoSyncEnabled.collectAsState()
+    val lastSyncTimeMs by viewModel.lastSyncTimeMs.collectAsState()
+    val isSyncing by viewModel.isSyncing.collectAsState()
+    val defaultReminderDays by viewModel.defaultReminderDays.collectAsState()
+
+    var inputServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
 
     var showResetDialog by remember { mutableStateOf(false) }
     var showClearExpiredDialog by remember { mutableStateOf(false) }
     var showClearConsumedDialog by remember { mutableStateOf(false) }
-
-    var defaultReminderDays by remember { mutableIntStateOf(3) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
 
     if (showResetDialog) {
         AlertDialog(
@@ -112,6 +121,34 @@ fun SettingsScreen(
         )
     }
 
+    if (showRestoreDialog) {
+        AlertDialog(
+            onDismissRequest = { showRestoreDialog = false },
+            title = { Text("从云端同步还原？") },
+            text = { Text("将从云端服务器拉取食材清单并合并至本地数据库。已存在同 ID 食材将被更新，新食材将被添加。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRestoreDialog = false
+                        if (inputServerUrl != serverUrl && inputServerUrl.isNotBlank()) {
+                            viewModel.setServerUrl(inputServerUrl)
+                        }
+                        viewModel.restoreFromCloud { _, msg ->
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                ) {
+                    Text("确认拉取还原", fontWeight = FontWeight.Bold, color = FreshGreenPrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestoreDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -155,7 +192,7 @@ fun SettingsScreen(
                         FilterChip(
                             selected = isSelected,
                             onClick = {
-                                defaultReminderDays = days
+                                viewModel.setDefaultReminderDays(days)
                                 Toast.makeText(context, "已设定提前 $days 天预警", Toast.LENGTH_SHORT).show()
                             },
                             label = { Text("提前${days}天") },
@@ -226,7 +263,216 @@ fun SettingsScreen(
             }
         }
 
-        // 3. 关于鲜食记
+        // 3. 云端同步与备份
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "☁️ 云端同步与备份",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = FreshGreenPrimary
+                        )
+                    }
+                }
+
+                Text(
+                    text = "支持自定义轻量 HTTP 同步服务，离线优先设计，保障食材数据安全。",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                OutlinedTextField(
+                    value = inputServerUrl,
+                    onValueChange = { inputServerUrl = it },
+                    label = { Text("服务器地址与端口") },
+                    placeholder = { Text("例如: http://192.168.1.x:8099") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Uri,
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    trailingIcon = {
+                        if (inputServerUrl != serverUrl && inputServerUrl.isNotBlank()) {
+                            IconButton(
+                                onClick = {
+                                    viewModel.setServerUrl(inputServerUrl)
+                                    Toast.makeText(context, "服务器地址已保存 💾", Toast.LENGTH_SHORT).show()
+                                }
+                            ) {
+                                Icon(Icons.Default.Save, contentDescription = "保存地址", tint = FreshGreenPrimary)
+                            }
+                        }
+                    }
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            viewModel.setServerUrl(inputServerUrl)
+                            viewModel.testConnection(inputServerUrl) { success, msg ->
+                                Toast.makeText(
+                                    context,
+                                    if (success) "连接成功: $msg ✅" else "连接失败: $msg ❌",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        },
+                        enabled = !isSyncing && inputServerUrl.isNotBlank(),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary)
+                    ) {
+                        Icon(Icons.Default.NetworkCheck, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("测试连接")
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.setServerUrl(inputServerUrl)
+                            Toast.makeText(context, "配置已保存 💾", Toast.LENGTH_SHORT).show()
+                        },
+                        enabled = inputServerUrl != serverUrl && inputServerUrl.isNotBlank(),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("保存配置")
+                    }
+                }
+
+                HorizontalDivider()
+
+                // 自动同步开关
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "自动同步到云端",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = "增删改查食材时静默上传，离线时完全正常使用",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = autoSyncEnabled,
+                        onCheckedChange = { enabled ->
+                            if (enabled && inputServerUrl.isBlank() && serverUrl.isBlank()) {
+                                Toast.makeText(context, "请先填写并保存服务器地址", Toast.LENGTH_SHORT).show()
+                            } else {
+                                if (inputServerUrl != serverUrl && inputServerUrl.isNotBlank()) {
+                                    viewModel.setServerUrl(inputServerUrl)
+                                }
+                                viewModel.setAutoSyncEnabled(enabled)
+                            }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = FreshGreenPrimary
+                        )
+                    )
+                }
+
+                HorizontalDivider()
+
+                // 手动同步操作按钮组
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            if (inputServerUrl != serverUrl && inputServerUrl.isNotBlank()) {
+                                viewModel.setServerUrl(inputServerUrl)
+                            }
+                            viewModel.uploadBackup { _, msg ->
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        enabled = !isSyncing && (inputServerUrl.isNotBlank() || serverUrl.isNotBlank()),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("上传本地清单", fontSize = 12.sp)
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            if (inputServerUrl.isBlank() && serverUrl.isBlank()) {
+                                Toast.makeText(context, "请先配置服务器地址", Toast.LENGTH_SHORT).show()
+                            } else {
+                                showRestoreDialog = true
+                            }
+                        },
+                        enabled = !isSyncing && (inputServerUrl.isNotBlank() || serverUrl.isNotBlank()),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("从云端同步还原", fontSize = 12.sp)
+                    }
+                }
+
+                // 上次同步时间显示
+                val syncTimeFormatted = if (lastSyncTimeMs > 0L) {
+                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                    sdf.format(java.util.Date(lastSyncTimeMs))
+                } else {
+                    "尚未同步"
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = if (lastSyncTimeMs > 0L) Icons.Default.CloudDone else Icons.Default.CloudQueue,
+                        contentDescription = null,
+                        tint = if (lastSyncTimeMs > 0L) FreshGreenPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "上次同步时间: $syncTimeFormatted",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        // 4. 关于鲜食记
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -256,7 +502,7 @@ fun SettingsScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "版本 v1.1.0",
+                    text = "版本 v1.2.0",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

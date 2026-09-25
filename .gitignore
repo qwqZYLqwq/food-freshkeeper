@@ -16,3 +16,10 @@ local.properties
 app/build/
 build/
 screenshots/
+*.apk
+.agents/
+__pycache__/
+*.py
+PROJECT.md
+TEST_INFRA.md
+TEST_READY.md

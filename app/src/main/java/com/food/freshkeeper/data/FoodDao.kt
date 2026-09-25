@@ -24,6 +24,9 @@ interface FoodDao {
     @Query("SELECT COUNT(*) FROM food_items WHERE isDeleted = 0")
     suspend fun getCount(): Int
 
+    @Query("SELECT * FROM food_items")
+    suspend fun getAllFoodItemsSnapshot(): List<FoodItem>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFood(food: FoodItem): Long
 
