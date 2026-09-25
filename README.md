@@ -4,6 +4,23 @@
 
 ---
 
+## 🆕 V1.2.0 版本更新日志
+
+- 🔄 **导航与防误触体验升级**：
+  - 重构 Compose 页面返回导航，一级/二级视图按系统返回键精准回到上一级，彻底消除历史回退死循环。
+  - 主界面（首页）实现双击防误退：单次返回按键弹出 Toast 提示，2 秒内再次按下才安全退出应用。
+  - 新增食材录入（AddEditScreen）智能拦截：表单有未保存内容时按返回键弹出二次确认对话框，防止手滑误触丢失录入进度。
+- ☁️ **食材数据远程备份与云端同步（离线优先）**：
+  - 应用设置中新增「云端同步与备份」模块，支持自定义服务器地址与端口（如 `http://<服务器IP>:8099`）。
+  - 支持一键连通性测试（健康检查）、手动上传本地清单、从云端拉取还原与合并。
+  - 支持食材增删改自动后台静默上传备份。
+  - **离线优先设计**：未配置服务器或网络离线时所有核心功能正常运行，网络异常优雅降级，无感容错。
+- 🛠️ **自建轻量同步服务支持**：
+  - 开源独立服务端模块（位于 `server/` 目录），纯 Python 3 原生标准库实现，零第三方依赖。
+  - 内置 `start.sh`、`stop.sh`、`status.sh` 运维脚本，完美支持 Linux VPS、家用 NAS 及 Android PRoot 等轻量容器环境。
+
+---
+
 ## ✨ 核心特性
 
 - 📱 **现代 Material 3 设计**：精致深色/浅色主题支持，流畅过渡动效，清爽护眼的健康饮食色调。
@@ -11,22 +28,62 @@
 - ⏰ **智能保质期跟踪**：直观展示倒计时与健康评分，临期预警，杜绝食品过期变质。
 - 💡 **保鲜保质妙招库**：内置丰富的食物保存科学指南与实用收纳保鲜建议。
 - 🗑️ **食材回收站机制**：支持食材安全归档与防手滑误删还原。
+- ☁️ **自主可控数据同步**：支持私有部署轻量同步服务，保障全量数据隐私安全。
 - 🥗 **精美专属图标**：定制化沙拉碗应用桌面图标与视觉标识。
+
+---
+
+## 🚀 自建轻量同步服务指南 (Self-Hosting Guide)
+
+鲜食记提供完全开源、零外部依赖的轻量同步服务，代码与脚本位于项目根目录的 `server/` 文件夹中。
+
+### 1. 服务端快速部署
+
+```bash
+# 进入服务端目录
+cd server
+
+# 启动服务（默认监听 0.0.0.0:8099，后台 nohup 运行）
+./start.sh
+
+# 检查服务健康与运行状态
+./status.sh
+
+# 停止服务
+./stop.sh
+```
+
+如需自定义端口或监听地址，可通过环境变量指定：
+```bash
+PORT=8099 ./start.sh
+```
+
+### 2. Android 客户端连接配置
+
+1. 打开「鲜食记」应用，进入底栏「设置」页面；
+2. 找到「云端同步与备份」模块；
+3. 在服务器地址栏输入：`http://<您的服务器IP>:8099`；
+4. 点击「测试连接」，连接成功后点击「保存配置」；
+5. 可开启「自动同步到云端」开关，或点击「上传本地清单」/「从云端同步还原」进行数据备份与拉取。
+
+> 详细服务端 API 规范与运维配置请参阅 [server/README.md](server/README.md)。
 
 ---
 
 ## 🛠️ 技术栈
 
-- **Language**: Kotlin
+- **Language**: Kotlin 1.9.22
 - **UI Toolkit**: Jetpack Compose, Material 3
 - **Architecture**: MVVM, Jetpack Lifecycle & ViewModel
 - **Database**: Room Database (SQLite)
 - **Local Storage**: Jetpack DataStore Preferences
+- **Network**: Android 原生 `HttpURLConnection` & `org.json`（轻量零外部依赖）
 - **Image Loader**: Coil Compose
+- **Backend**: Python 3 原生标准库 (`http.server`)
 - **Target SDK**: Android 14 (API 34), Min SDK: Android 8.0 (API 26)
 
 ---
 
 ## 📦 下载安装
 
-前往 [Releases 页面](https://github.com/qwqZYLqwq/food-freshkeeper/releases) 下载最新版本的 APK 即可直接安装体验。
+前往 [Releases 页面](https://github.com/qwqZYLqwq/food-freshkeeper/releases) 下载最新版本 `鲜食记_v1.2.0.apk` 即可直接安装体验。

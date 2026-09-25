@@ -2,6 +2,7 @@ package com.food.freshkeeper.ui.screens
 
 import android.app.DatePickerDialog
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -80,6 +81,29 @@ fun AddEditScreen(
     var quantity by remember { mutableStateOf("1份") }
     var notes by remember { mutableStateOf("") }
     var reminderDaysBefore by remember { mutableIntStateOf(3) }
+
+    var showDiscardDialog by remember { mutableStateOf(false) }
+
+    val hasUnsavedChanges = remember(
+        name, selectedCategory, iconEmoji, imageUriString,
+        selectedLocation, shelfLifeNumberInput, selectedUnit, quantity, notes
+    ) {
+        !isEditMode && (
+            name.isNotBlank() ||
+            selectedCategory != "水果" ||
+            iconEmoji != "🍎" ||
+            imageUriString != null ||
+            selectedLocation != "冷藏室 🧊" ||
+            shelfLifeNumberInput != "7" ||
+            selectedUnit != ShelfLifeUnit.DAY ||
+            quantity != "1份" ||
+            notes.isNotBlank()
+        )
+    }
+
+    BackHandler(enabled = hasUnsavedChanges) {
+        showDiscardDialog = true
+    }
 
     // 当获取到已存数据时填入
     LaunchedEffect(existingFood) {
@@ -164,7 +188,13 @@ fun AddEditScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = {
+                        if (hasUnsavedChanges) {
+                            showDiscardDialog = true
+                        } else {
+                            navController.popBackStack()
+                        }
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
@@ -632,5 +662,45 @@ fun AddEditScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = {
+                Text(
+                    text = "放弃录入？",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(text = "当前输入的内容尚未保存，返回后将丢失。")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDiscardDialog = false
+                        navController.popBackStack()
+                    }
+                ) {
+                    Text(
+                        text = "放弃录入",
+                        color = UrgentRed,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDiscardDialog = false }
+                ) {
+                    Text(
+                        text = "继续填写",
+                        color = FreshGreenPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        )
     }
 }
