@@ -98,18 +98,13 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             SharingStarted.WhileSubscribed(5000),
             emptyList()
         )
-
-        // 确保初次安装有生动示范数据
-        viewModelScope.launch {
-            repository.ensureInitialData()
-        }
     }
 
-    // 临期食品 (<=2天且未过期)
+    // 临期食品 (0..7天且未过期)
     val urgentFoods: StateFlow<List<FoodItem>> = activeFoods.map { list ->
         list.filter {
             val days = it.remainingDays()
-            days in 0..2
+            days in 0..7
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -134,7 +129,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 "冷藏" -> !food.isConsumed && food.location.contains("冷藏")
                 "冷冻" -> !food.isConsumed && food.location.contains("冷冻")
                 "常温" -> !food.isConsumed && food.location.contains("常温")
-                "紧急临期" -> !food.isConsumed && food.remainingDays() in 0..2
+                "紧急临期", "临期待吃" -> !food.isConsumed && food.remainingDays() in 0..7
                 "已过期" -> !food.isConsumed && food.remainingDays() < 0
                 "已消灭" -> food.isConsumed
                 else -> true
@@ -299,6 +294,13 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun addSampleData() {
+        viewModelScope.launch {
+            repository.addSampleData()
+            triggerAutoUploadIfEnabled()
+        }
+    }
+
     fun clearConsumed() {
         viewModelScope.launch {
             repository.clearConsumed()
@@ -313,6 +315,13 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun getImagesDir(): File {
+        val context = getApplication<Application>()
+        return File(context.filesDir, "food_images").apply {
+            if (!exists()) mkdirs()
+        }
+    }
+
     private fun triggerAutoUploadIfEnabled() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -320,7 +329,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 val enabled = autoSyncEnabled.value
                 if (!enabled || url.isBlank()) return@launch
                 val snapshot = foodDao.getAllFoodItemsSnapshot()
-                val result = syncClient.uploadFoods(url, snapshot)
+                val result = syncClient.uploadFoods(url, snapshot, getImagesDir())
                 if (result.isSuccess) {
                     settingsRepository.setLastSyncTime(System.currentTimeMillis())
                 }
@@ -379,7 +388,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             isSyncing.value = true
             try {
                 val snapshot = withContext(Dispatchers.IO) { foodDao.getAllFoodItemsSnapshot() }
-                val result = syncClient.uploadFoods(url, snapshot)
+                val result = syncClient.uploadFoods(url, snapshot, getImagesDir())
                 isSyncing.value = false
                 if (result.isSuccess) {
                     val count = result.getOrDefault(snapshot.size)
@@ -406,7 +415,8 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             isSyncing.value = true
             try {
-                val result = syncClient.fetchFoods(url)
+                val imagesDir = getImagesDir()
+                val result = syncClient.fetchFoods(url, imagesDir)
                 if (result.isSuccess) {
                     val remoteFoods = result.getOrNull() ?: emptyList()
                     withContext(Dispatchers.IO) {
@@ -415,7 +425,12 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                     val now = System.currentTimeMillis()
                     settingsRepository.setLastSyncTime(now)
                     isSyncing.value = false
-                    onResult(true, "同步成功，已恢复 ${remoteFoods.size} 项食材 📥")
+
+                    val activeCount = remoteFoods.count { !it.isConsumed && !it.isDeleted }
+                    val consumedCount = remoteFoods.count { it.isConsumed && !it.isDeleted }
+                    val trashCount = remoteFoods.count { it.isDeleted }
+                    val msg = "同步成功！已恢复 ${remoteFoods.size} 项食材 (在库 $activeCount 项, 已食用 $consumedCount 项, 回收站 $trashCount 项) 📥"
+                    onResult(true, msg)
                 } else {
                     isSyncing.value = false
                     val err = result.exceptionOrNull()?.message ?: "拉取失败"
@@ -428,6 +443,44 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // 本地离线备份包导出与导入
+    fun exportBackup(destinationUri: Uri, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            isSyncing.value = true
+            try {
+                val context = getApplication<Application>()
+                val snapshot = withContext(Dispatchers.IO) { foodDao.getAllFoodItemsSnapshot() }
+                val result = BackupManager.exportBackup(context, destinationUri, snapshot)
+                isSyncing.value = false
+                onResult(result.success, result.message)
+            } catch (e: Exception) {
+                isSyncing.value = false
+                onResult(false, "导出异常: ${e.message}")
+            }
+        }
+    }
+
+    fun importBackup(sourceUri: Uri, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            isSyncing.value = true
+            try {
+                val context = getApplication<Application>()
+                val (result, importedFoods) = BackupManager.importBackup(context, sourceUri)
+                if (result.success && importedFoods.isNotEmpty()) {
+                    withContext(Dispatchers.IO) {
+                        foodDao.insertAll(importedFoods)
+                    }
+                    triggerAutoUploadIfEnabled()
+                }
+                isSyncing.value = false
+                onResult(result.success, result.message)
+            } catch (e: Exception) {
+                isSyncing.value = false
+                onResult(false, "导入异常: ${e.message}")
+            }
+        }
+    }
+
     fun getFoodById(id: Long): Flow<FoodItem?> = repository.getFoodById(id)
 
     /**
@@ -436,15 +489,30 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun saveImageToInternalStorage(uri: Uri): String? = withContext(Dispatchers.IO) {
         try {
             val context = getApplication<Application>()
-            val imagesDir = File(context.filesDir, "food_images").apply {
-                if (!exists()) mkdirs()
-            }
+            val imagesDir = getImagesDir()
             val targetFile = File(imagesDir, "food_${System.currentTimeMillis()}.jpg")
             context.contentResolver.openInputStream(uri)?.use { input ->
                 FileOutputStream(targetFile).use { output ->
                     input.copyTo(output)
                 }
             }
+            targetFile.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
+     * 将拍照临时文件规范化保存到正式图片目录
+     */
+    suspend fun saveCapturedPhotoToStorage(tempFile: File): String? = withContext(Dispatchers.IO) {
+        try {
+            if (!tempFile.exists() || tempFile.length() == 0L) return@withContext null
+            val imagesDir = getImagesDir()
+            val targetFile = File(imagesDir, "food_${System.currentTimeMillis()}.jpg")
+            tempFile.copyTo(targetFile, overwrite = true)
+            tempFile.delete()
             targetFile.absolutePath
         } catch (e: Exception) {
             e.printStackTrace()

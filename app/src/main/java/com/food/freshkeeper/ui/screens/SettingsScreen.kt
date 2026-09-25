@@ -1,6 +1,8 @@
 package com.food.freshkeeper.ui.screens
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -44,29 +47,49 @@ fun SettingsScreen(
 
     var inputServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
 
-    var showResetDialog by remember { mutableStateOf(false) }
+    var showAddSampleDialog by remember { mutableStateOf(false) }
     var showClearExpiredDialog by remember { mutableStateOf(false) }
     var showClearConsumedDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
 
-    if (showResetDialog) {
+    val exportZipLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportBackup(uri) { _, msg ->
+                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    val importZipLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.importBackup(uri) { _, msg ->
+                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    if (showAddSampleDialog) {
         AlertDialog(
-            onDismissRequest = { showResetDialog = false },
-            title = { Text("重置并加载示范食材？") },
-            text = { Text("这将清空当前食材并恢复初始丰富多样的示范食材，方便立即体验各项功能。") },
+            onDismissRequest = { showAddSampleDialog = false },
+            title = { Text("添加示范食材？") },
+            text = { Text("确认添加内置示范食材？将向您的清单中注入常用的示范食材数据") },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.resetSampleData()
-                        showResetDialog = false
-                        Toast.makeText(context, "示范食材已加载完成！✨", Toast.LENGTH_SHORT).show()
+                        viewModel.addSampleData()
+                        showAddSampleDialog = false
+                        Toast.makeText(context, "已成功添加示范食材 🥕", Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Text("确认重置", fontWeight = FontWeight.Bold, color = FreshGreenPrimary)
+                    Text("确认添加", fontWeight = FontWeight.Bold, color = FreshGreenPrimary)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) {
+                TextButton(onClick = { showAddSampleDialog = false }) {
                     Text("取消")
                 }
             }
@@ -134,7 +157,7 @@ fun SettingsScreen(
                             viewModel.setServerUrl(inputServerUrl)
                         }
                         viewModel.restoreFromCloud { _, msg ->
-                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
                         }
                     }
                 ) {
@@ -185,9 +208,9 @@ fun SettingsScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    listOf(1, 2, 3, 5).forEach { days ->
+                    listOf(1, 3, 5, 7).forEach { days ->
                         val isSelected = defaultReminderDays == days
                         FilterChip(
                             selected = isSelected,
@@ -195,7 +218,21 @@ fun SettingsScreen(
                                 viewModel.setDefaultReminderDays(days)
                                 Toast.makeText(context, "已设定提前 $days 天预警", Toast.LENGTH_SHORT).show()
                             },
-                            label = { Text("提前${days}天") },
+                            label = {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "${days}天",
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            },
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(
@@ -254,11 +291,38 @@ fun SettingsScreen(
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
 
                 SettingActionRow(
-                    title = "恢复丰富示范食材",
-                    subtitle = "清空并重新填入草莓、牛排、牛奶等示范数据",
-                    icon = Icons.Default.Refresh,
+                    title = "添加示范食材",
+                    subtitle = "向您的清单中注入常用的示范食材数据",
+                    icon = Icons.Default.AddCircle,
                     tint = FreshGreenPrimary,
-                    onClick = { showResetDialog = true }
+                    onClick = { showAddSampleDialog = true }
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+
+                SettingActionRow(
+                    title = "导出离线数据包 (ZIP)",
+                    subtitle = "将所有食材数据与照片打包为单一 ZIP 归档",
+                    icon = Icons.Default.Archive,
+                    tint = FreshGreenPrimary,
+                    onClick = {
+                        val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+                        exportZipLauncher.launch("鲜食记_数据备份_$timestamp.zip")
+                    }
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+
+                SettingActionRow(
+                    title = "导入离线数据包 (ZIP)",
+                    subtitle = "从外部 ZIP 备份文件恢复食材数据与本地照片",
+                    icon = Icons.Default.Unarchive,
+                    tint = FreshGreenPrimary,
+                    onClick = {
+                        importZipLauncher.launch(
+                            arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream", "*/*")
+                        )
+                    }
                 )
             }
         }
@@ -502,7 +566,7 @@ fun SettingsScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "版本 v1.2.0",
+                    text = "版本 v1.3.0",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -20,6 +20,8 @@ screenshots/
 .agents/
 __pycache__/
 *.py
+!server/server.py
 PROJECT.md
 TEST_INFRA.md
 TEST_READY.md
+*.db

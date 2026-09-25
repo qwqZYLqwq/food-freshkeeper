@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -41,6 +44,9 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
 
     val showBottomBar = currentRoute in listOf("home", "list", "tips", "settings")
 
+    val tabOrder = remember { mapOf("home" to 0, "list" to 1, "tips" to 2, "settings" to 3) }
+    var slideDirection by remember { mutableStateOf(AnimatedContentTransitionScope.SlideDirection.Left) }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
@@ -49,6 +55,14 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
                     currentRoute = currentRoute,
                     onNavigate = { route ->
                         if (route != currentRoute) {
+                            val fromIndex = tabOrder[currentRoute] ?: 0
+                            val toIndex = tabOrder[route] ?: 0
+                            slideDirection = if (toIndex >= fromIndex) {
+                                AnimatedContentTransitionScope.SlideDirection.Left
+                            } else {
+                                AnimatedContentTransitionScope.SlideDirection.Right
+                            }
+
                             if (route == "home") {
                                 val popped = navController.popBackStack("home", inclusive = false)
                                 if (!popped) {
@@ -75,30 +89,26 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
             navController = navController,
             startDestination = "home",
             modifier = Modifier.padding(paddingValues),
-            // 升级需求4：动画不要渐变，改成利落干脆的左右平移滑动，时间220ms
+            // 菜单切换动画按 Tab 空间相对位置自然平移
             enterTransition = {
-                slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(220)
-                )
+                val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
+                val targetRoute = targetState.destination.route?.substringBefore("?")?.substringBefore("/")
+                val isTabSwitch = (initialRoute in tabOrder || initialRoute == null) && targetRoute in tabOrder
+                val direction = if (isTabSwitch) slideDirection else AnimatedContentTransitionScope.SlideDirection.Left
+                slideIntoContainer(direction, animationSpec = tween(220))
             },
             exitTransition = {
-                slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(220)
-                )
+                val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
+                val targetRoute = targetState.destination.route?.substringBefore("?")?.substringBefore("/")
+                val isTabSwitch = initialRoute in tabOrder && (targetRoute in tabOrder || targetRoute == null)
+                val direction = if (isTabSwitch) slideDirection else AnimatedContentTransitionScope.SlideDirection.Left
+                slideOutOfContainer(direction, animationSpec = tween(220))
             },
             popEnterTransition = {
-                slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(220)
-                )
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(220))
             },
             popExitTransition = {
-                slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(220)
-                )
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(220))
             }
         ) {
             composable("home") {

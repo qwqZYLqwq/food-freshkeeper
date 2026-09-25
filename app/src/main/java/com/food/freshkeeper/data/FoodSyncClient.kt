@@ -1,18 +1,22 @@
 package com.food.freshkeeper.data
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 
 class FoodSyncClient(
-    private val connectTimeoutMs: Int = 5000,
-    private val readTimeoutMs: Int = 10000
+    private val connectTimeoutMs: Int = 10000,
+    private val readTimeoutMs: Int = 45000
 ) {
 
     private fun cleanBaseUrl(rawUrl: String): String {
@@ -46,11 +50,10 @@ class FoodSyncClient(
                 conn.disconnect()
                 val json = JSONObject(responseText)
                 val service = json.optString("service", "鲜食记同步服务")
-                val version = json.optString("version", "1.2.0")
+                val version = json.optString("version", "1.3.0")
                 Result.success("服务在线: $service (v$version)")
             } else {
                 conn.disconnect()
-                // 尝试 /api/ping 兼容备用端点
                 val pingUrl = "$baseUrl/api/ping"
                 val pingConn = (URL(pingUrl).openConnection() as HttpURLConnection).apply {
                     requestMethod = "GET"
@@ -76,7 +79,11 @@ class FoodSyncClient(
         }
     }
 
-    suspend fun uploadFoods(serverUrl: String, foods: List<FoodItem>): Result<Int> = withContext(Dispatchers.IO) {
+    suspend fun uploadFoods(
+        serverUrl: String,
+        foods: List<FoodItem>,
+        imagesDir: File? = null
+    ): Result<Int> = withContext(Dispatchers.IO) {
         val baseUrl = cleanBaseUrl(serverUrl)
         if (baseUrl.isBlank()) {
             return@withContext Result.failure(IllegalArgumentException("服务器地址为空"))
@@ -96,7 +103,7 @@ class FoodSyncClient(
             val rootJson = JSONObject()
             val arrayJson = JSONArray()
             foods.forEach { food ->
-                arrayJson.put(foodToJson(food))
+                arrayJson.put(foodToJson(food, imagesDir))
             }
             rootJson.put("foods", arrayJson)
             rootJson.put("timestamp", System.currentTimeMillis())
@@ -125,7 +132,10 @@ class FoodSyncClient(
         }
     }
 
-    suspend fun fetchFoods(serverUrl: String): Result<List<FoodItem>> = withContext(Dispatchers.IO) {
+    suspend fun fetchFoods(
+        serverUrl: String,
+        imagesDir: File? = null
+    ): Result<List<FoodItem>> = withContext(Dispatchers.IO) {
         val baseUrl = cleanBaseUrl(serverUrl)
         if (baseUrl.isBlank()) {
             return@withContext Result.failure(IllegalArgumentException("服务器地址为空"))
@@ -152,7 +162,7 @@ class FoodSyncClient(
                     val jsonArray = JSONArray(trimmedText)
                     for (i in 0 until jsonArray.length()) {
                         val obj = jsonArray.getJSONObject(i)
-                        resultList.add(jsonToFood(obj))
+                        resultList.add(jsonToFood(obj, imagesDir))
                     }
                 } else {
                     val rootJson = JSONObject(trimmedText)
@@ -160,7 +170,7 @@ class FoodSyncClient(
                     if (foodsArray != null) {
                         for (i in 0 until foodsArray.length()) {
                             val obj = foodsArray.getJSONObject(i)
-                            resultList.add(jsonToFood(obj))
+                            resultList.add(jsonToFood(obj, imagesDir))
                         }
                     }
                 }
@@ -176,7 +186,7 @@ class FoodSyncClient(
         }
     }
 
-    fun foodToJson(food: FoodItem): JSONObject {
+    fun foodToJson(food: FoodItem, imagesDir: File? = null, includeBase64: Boolean = true): JSONObject {
         val obj = JSONObject()
         obj.put("id", food.id)
         obj.put("name", food.name)
@@ -188,11 +198,28 @@ class FoodSyncClient(
         obj.put("expiryDateMs", food.expiryDateMs)
         obj.put("quantity", food.quantity)
         obj.put("notes", food.notes)
-        if (food.imageUri != null) {
+        
+        // 处理图片路径与 Base64 编码
+        if (!food.imageUri.isNullOrBlank()) {
             obj.put("imageUri", food.imageUri)
+            if (includeBase64) {
+                var path = food.imageUri
+                if (path.startsWith("file://")) {
+                    path = path.removePrefix("file://")
+                }
+                val imgFile = File(path)
+                if (imgFile.exists() && imgFile.isFile) {
+                    val base64 = compressFileToBase64(imgFile)
+                    if (!base64.isNullOrBlank()) {
+                        obj.put("imageBase64", base64)
+                        obj.put("imageFileName", imgFile.name)
+                    }
+                }
+            }
         } else {
             obj.put("imageUri", JSONObject.NULL)
         }
+
         obj.put("isConsumed", food.isConsumed)
         if (food.consumedAtMs != null) {
             obj.put("consumedAtMs", food.consumedAtMs)
@@ -210,7 +237,7 @@ class FoodSyncClient(
         return obj
     }
 
-    fun jsonToFood(obj: JSONObject): FoodItem {
+    fun jsonToFood(obj: JSONObject, imagesDir: File? = null): FoodItem {
         val id = obj.optLong("id", 0L)
         val name = obj.optString("name", "未命名食材")
         val category = obj.optString("category", "其他")
@@ -221,10 +248,25 @@ class FoodSyncClient(
         val expiryDateMs = obj.optLong("expiryDateMs", System.currentTimeMillis())
         val quantity = obj.optString("quantity", "1份")
         val notes = obj.optString("notes", "")
-        val imageUri = if (obj.has("imageUri") && !obj.isNull("imageUri")) {
+
+        var imageUri: String? = if (obj.has("imageUri") && !obj.isNull("imageUri")) {
             val s = obj.getString("imageUri")
             if (s.isEmpty() || s == "null") null else s
         } else null
+
+        // 如果存在 Base64 图片数据且本地目标文件不存在，解码保存为本地文件
+        if (obj.has("imageBase64") && !obj.isNull("imageBase64") && imagesDir != null) {
+            val base64 = obj.getString("imageBase64")
+            if (base64.isNotBlank()) {
+                val fileName = obj.optString("imageFileName", "food_sync_${id}_${System.currentTimeMillis()}.jpg")
+                val localFile = File(imagesDir, fileName)
+                val success = saveBase64ToFile(base64, localFile)
+                if (success) {
+                    imageUri = localFile.absolutePath
+                }
+            }
+        }
+
         val isConsumed = obj.optBoolean("isConsumed", false)
         val consumedAtMs = if (obj.has("consumedAtMs") && !obj.isNull("consumedAtMs")) {
             val v = obj.getLong("consumedAtMs")
@@ -257,5 +299,63 @@ class FoodSyncClient(
             reminderDaysBefore = reminderDaysBefore,
             createdAtMs = createdAtMs
         )
+    }
+
+    private fun compressFileToBase64(file: File, maxDimension: Int = 800, quality: Int = 80): String? {
+        return try {
+            var filePath = file.absolutePath
+            if (filePath.startsWith("file://")) {
+                filePath = filePath.removePrefix("file://")
+            }
+            val targetFile = File(filePath)
+            if (!targetFile.exists() || !targetFile.isFile) return null
+
+            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(targetFile.absolutePath, options)
+            var sampleSize = 1
+            while (options.outWidth / sampleSize > maxDimension * 1.5 || options.outHeight / sampleSize > maxDimension * 1.5) {
+                sampleSize *= 2
+            }
+            val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+            val bitmap = BitmapFactory.decodeFile(targetFile.absolutePath, decodeOptions) ?: return null
+
+            val scaledBitmap = if (bitmap.width > maxDimension || bitmap.height > maxDimension) {
+                val ratio = minOf(maxDimension.toFloat() / bitmap.width, maxDimension.toFloat() / bitmap.height)
+                val newWidth = (bitmap.width * ratio).toInt().coerceAtLeast(1)
+                val newHeight = (bitmap.height * ratio).toInt().coerceAtLeast(1)
+                val scaled = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+                if (scaled != bitmap) {
+                    bitmap.recycle()
+                }
+                scaled
+            } else {
+                bitmap
+            }
+
+            val outputStream = ByteArrayOutputStream()
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+            scaledBitmap.recycle()
+            Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private fun saveBase64ToFile(base64Str: String, targetFile: File): Boolean {
+        return try {
+            val bytes = Base64.decode(base64Str, Base64.DEFAULT)
+            if (targetFile.parentFile != null && !targetFile.parentFile!!.exists()) {
+                targetFile.parentFile!!.mkdirs()
+            }
+            FileOutputStream(targetFile).use { fos ->
+                fos.write(bytes)
+                fos.flush()
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 }

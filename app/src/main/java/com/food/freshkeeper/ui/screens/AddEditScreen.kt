@@ -1,7 +1,11 @@
 package com.food.freshkeeper.ui.screens
 
+import android.Manifest
 import android.app.DatePickerDialog
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.food.freshkeeper.FoodViewModel
@@ -37,6 +42,7 @@ import com.food.freshkeeper.data.FoodDataPresets
 import com.food.freshkeeper.data.FoodItem
 import com.food.freshkeeper.ui.theme.*
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -148,19 +154,70 @@ fun AddEditScreen(
     val dateFormat = SimpleDateFormat("yyyy年MM月dd日", Locale.getDefault())
     val expiryDateStr = dateFormat.format(Date(calculatedExpiryDateMs))
 
-    // 图片选择器
-    val photoPickerLauncher = rememberLauncherForActivityResult(
+    var showPhotoSourceSheet by remember { mutableStateOf(false) }
+    var tempCameraFile by remember { mutableStateOf<File?>(null) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    // 相册选择器
+    val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             coroutineScope.launch {
                 val localPath = viewModel.saveImageToInternalStorage(it)
-                if (localPath != null) {
-                    imageUriString = localPath
-                } else {
-                    imageUriString = it.toString()
+                imageUriString = localPath ?: it.toString()
+            }
+        }
+    }
+
+    // 相机拍照选择器
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        if (success && tempCameraFile != null) {
+            coroutineScope.launch {
+                val savedPath = viewModel.saveCapturedPhotoToStorage(tempCameraFile!!)
+                if (savedPath != null) {
+                    imageUriString = savedPath
+                } else if (tempCameraUri != null) {
+                    imageUriString = tempCameraUri.toString()
                 }
             }
+        }
+    }
+
+    fun launchCamera() {
+        try {
+            val cacheDir = context.cacheDir
+            val imagesDir = File(cacheDir, "camera_temp").apply { if (!exists()) mkdirs() }
+            val file = File(imagesDir, "temp_photo_${System.currentTimeMillis()}.jpg")
+            tempCameraFile = file
+            val authority = "${context.packageName}.fileprovider"
+            val uri = FileProvider.getUriForFile(context, authority, file)
+            tempCameraUri = uri
+            cameraLauncher.launch(uri)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(context, "无法启动相机: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // 相机权限请求器
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            launchCamera()
+        } else {
+            Toast.makeText(context, "需要相机权限拍摄食材照片", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun requestCameraAndLaunch() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            launchCamera()
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -328,7 +385,7 @@ fun AddEditScreen(
                                 .clip(RoundedCornerShape(18.dp))
                                 .background(FreshGreenLight)
                                 .border(1.5.dp, FreshGreenPrimary, RoundedCornerShape(18.dp))
-                                .clickable { photoPickerLauncher.launch("image/*") },
+                                .clickable { showPhotoSourceSheet = true },
                             contentAlignment = Alignment.Center
                         ) {
                             if (!imageUriString.isNullOrBlank()) {
@@ -357,18 +414,18 @@ fun AddEditScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "照片将在主页、清单卡片和详情页醒目展示",
+                                text = "支持拍照或从相册选择，生动记录保鲜",
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             OutlinedButton(
-                                onClick = { photoPickerLauncher.launch("image/*") },
+                                onClick = { showPhotoSourceSheet = true },
                                 shape = RoundedCornerShape(10.dp),
                                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                                 modifier = Modifier.height(28.dp)
                             ) {
-                                Text(if (imageUriString != null) "更换照片" else "从相册选择", fontSize = 11.sp)
+                                Text(if (imageUriString != null) "更换照片 📷" else "拍照/相册选择 📷", fontSize = 11.sp)
                             }
                         }
                     }
@@ -702,5 +759,99 @@ fun AddEditScreen(
                 }
             }
         )
+    }
+
+    if (showPhotoSourceSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showPhotoSourceSheet = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "选择食材照片 📸",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            showPhotoSourceSheet = false
+                            requestCameraAndLaunch()
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.CameraAlt, contentDescription = null, tint = FreshGreenPrimary, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text("拍照", fontWeight = FontWeight.SemiBold)
+                            Text("调出相机现场拍摄新鲜食材实物照片", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            showPhotoSourceSheet = false
+                            galleryLauncher.launch("image/*")
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = FreshGreenPrimary, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text("从相册选择", fontWeight = FontWeight.SemiBold)
+                            Text("选择手机内已保存的食材照片", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+
+                if (!imageUriString.isNullOrBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.background,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                imageUriString = null
+                                showPhotoSourceSheet = false
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = UrgentRed, modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text("移除当前照片", color = UrgentRed, fontWeight = FontWeight.SemiBold)
+                                Text("清空已选择的照片并使用 Emoji 图标", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
     }
 }

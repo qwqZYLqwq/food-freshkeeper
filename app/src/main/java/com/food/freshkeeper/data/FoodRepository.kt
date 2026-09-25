@@ -53,17 +53,17 @@ class FoodRepository(private val foodDao: FoodDao) {
         foodDao.insertAll(FoodDataPresets.createInitialMockFoods())
     }
 
+    suspend fun addSampleData() {
+        // 生成全新 ID 的示范食材以避免覆盖已有食材
+        val samples = FoodDataPresets.createInitialMockFoods().map { it.copy(id = 0L) }
+        foodDao.insertAll(samples)
+    }
+
     suspend fun clearConsumed() {
         foodDao.clearConsumed()
     }
 
     suspend fun clearExpired() {
         foodDao.clearExpired(System.currentTimeMillis())
-    }
-
-    suspend fun ensureInitialData() {
-        if (foodDao.getCount() == 0) {
-            foodDao.insertAll(FoodDataPresets.createInitialMockFoods())
-        }
     }
 }
