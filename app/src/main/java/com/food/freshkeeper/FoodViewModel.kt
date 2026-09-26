@@ -51,6 +51,12 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         3
     )
 
+    val notificationEnabled: StateFlow<Boolean> = settingsRepository.notificationEnabled.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        true
+    )
+
     val isSyncing = MutableStateFlow(false)
     val isRefreshing = MutableStateFlow(false)
 
@@ -390,6 +396,12 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     fun setDefaultReminderDays(days: Int) {
         viewModelScope.launch {
             settingsRepository.setDefaultReminderDays(days)
+        }
+    }
+
+    fun setNotificationEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setNotificationEnabled(enabled)
         }
     }
 
