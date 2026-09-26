@@ -89,26 +89,46 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
             navController = navController,
             startDestination = "home",
             modifier = Modifier.padding(paddingValues),
-            // 菜单切换动画按 Tab 空间相对位置自然平移
+            // 菜单切换动画仅在四大 Tab 之间按空间相对位置平移，进入二级界面（如详情页）采用原地无滑动卡片扩展
             enterTransition = {
                 val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
                 val targetRoute = targetState.destination.route?.substringBefore("?")?.substringBefore("/")
                 val isTabSwitch = (initialRoute in tabOrder || initialRoute == null) && targetRoute in tabOrder
-                val direction = if (isTabSwitch) slideDirection else AnimatedContentTransitionScope.SlideDirection.Left
-                slideIntoContainer(direction, animationSpec = tween(220))
+                if (isTabSwitch) {
+                    slideIntoContainer(slideDirection, animationSpec = tween(220))
+                } else {
+                    androidx.compose.animation.fadeIn(animationSpec = tween(250))
+                }
             },
             exitTransition = {
                 val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
                 val targetRoute = targetState.destination.route?.substringBefore("?")?.substringBefore("/")
                 val isTabSwitch = initialRoute in tabOrder && (targetRoute in tabOrder || targetRoute == null)
-                val direction = if (isTabSwitch) slideDirection else AnimatedContentTransitionScope.SlideDirection.Left
-                slideOutOfContainer(direction, animationSpec = tween(220))
+                if (isTabSwitch) {
+                    slideOutOfContainer(slideDirection, animationSpec = tween(220))
+                } else {
+                    androidx.compose.animation.fadeOut(animationSpec = tween(200))
+                }
             },
             popEnterTransition = {
-                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(220))
+                val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
+                val targetRoute = targetState.destination.route?.substringBefore("?")?.substringBefore("/")
+                val isTabSwitch = initialRoute in tabOrder && targetRoute in tabOrder
+                if (isTabSwitch) {
+                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(220))
+                } else {
+                    androidx.compose.animation.fadeIn(animationSpec = tween(250))
+                }
             },
             popExitTransition = {
-                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(220))
+                val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
+                val targetRoute = targetState.destination.route?.substringBefore("?")?.substringBefore("/")
+                val isTabSwitch = initialRoute in tabOrder && targetRoute in tabOrder
+                if (isTabSwitch) {
+                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(220))
+                } else {
+                    androidx.compose.animation.fadeOut(animationSpec = tween(200))
+                }
             }
         ) {
             composable("home") {
@@ -151,19 +171,25 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
                     }
                 ),
                 enterTransition = {
-                    androidx.compose.animation.fadeIn(animationSpec = tween(300)) +
+                    androidx.compose.animation.fadeIn(animationSpec = tween(280)) +
                     androidx.compose.animation.scaleIn(
-                        initialScale = 0.85f,
+                        initialScale = 0.70f,
                         transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.4f),
-                        animationSpec = tween(340, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                        animationSpec = tween(360, easing = androidx.compose.animation.core.FastOutSlowInEasing)
                     )
+                },
+                exitTransition = {
+                    androidx.compose.animation.fadeOut(animationSpec = tween(200))
+                },
+                popEnterTransition = {
+                    androidx.compose.animation.fadeIn(animationSpec = tween(250))
                 },
                 popExitTransition = {
                     androidx.compose.animation.fadeOut(animationSpec = tween(220)) +
                     androidx.compose.animation.scaleOut(
-                        targetScale = 0.85f,
+                        targetScale = 0.70f,
                         transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.4f),
-                        animationSpec = tween(260, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                        animationSpec = tween(280, easing = androidx.compose.animation.core.FastOutSlowInEasing)
                     )
                 }
             ) { backStackEntry ->
