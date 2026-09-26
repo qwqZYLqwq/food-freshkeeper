@@ -56,8 +56,12 @@ fun FoodKeeperTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
-                window.statusBarColor = colorScheme.background.toArgb()
+                val bgArgb = colorScheme.background.toArgb()
+                window.statusBarColor = bgArgb
+                window.navigationBarColor = bgArgb
+                window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(bgArgb))
                 WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
             }
         }
     }
