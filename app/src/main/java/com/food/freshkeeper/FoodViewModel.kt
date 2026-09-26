@@ -554,4 +554,42 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             null
         }
     }
+
+    /**
+     * 发送一条真实的食品过期模拟通知
+     */
+    fun sendTestExpiryNotification(context: android.content.Context): Pair<Boolean, String> {
+        val expiredSample = expiredFoods.value.firstOrNull()
+        val urgentSample = urgentFoods.value.firstOrNull()
+        val activeSample = activeFoods.value.firstOrNull()
+
+        val foodName = when {
+            expiredSample != null -> "${expiredSample.name} ${expiredSample.iconEmoji}"
+            urgentSample != null -> "${urgentSample.name} ${urgentSample.iconEmoji}"
+            activeSample != null -> "${activeSample.name} ${activeSample.iconEmoji}"
+            else -> "鲜牛奶 🥛"
+        }
+
+        val daysMessage = when {
+            expiredSample != null -> "已过期 ${-expiredSample.remainingDays()} 天"
+            urgentSample != null -> "仅剩 ${urgentSample.remainingDays()} 天即将过期"
+            activeSample != null -> "仅剩 ${activeSample.remainingDays()} 天即将过期"
+            else -> "已过期 1 天"
+        }
+
+        val location = expiredSample?.location ?: urgentSample?.location ?: activeSample?.location ?: "冷藏室 🧊"
+
+        val success = NotificationHelper.sendExpiryNotification(
+            context = context,
+            foodName = foodName,
+            daysMessage = daysMessage,
+            location = location
+        )
+
+        return if (success) {
+            Pair(true, "已成功发送测试通知，请下拉通知栏查看 🔔")
+        } else {
+            Pair(false, "通知发送受阻，请确保系统已允许鲜食记的通知权限")
+        }
+    }
 }

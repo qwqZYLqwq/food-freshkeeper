@@ -1,5 +1,8 @@
 package com.food.freshkeeper.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.food.freshkeeper.FoodViewModel
 import com.food.freshkeeper.ui.theme.FreshGreenLight
@@ -51,6 +55,17 @@ fun SettingsScreen(
     var showClearExpiredDialog by remember { mutableStateOf(false) }
     var showClearConsumedDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val (success, msg) = viewModel.sendTestExpiryNotification(context)
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "通知权限被拒绝，请在系统设置中允许鲜食记发送通知", Toast.LENGTH_LONG).show()
+        }
+    }
 
     val exportZipLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
@@ -241,6 +256,30 @@ fun SettingsScreen(
                             )
                         )
                     }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                return@OutlinedButton
+                            }
+                        }
+                        val (success, msg) = viewModel.sendTestExpiryNotification(context)
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = FreshGreenPrimary),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("发送食物过期模拟通知 🔔", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
