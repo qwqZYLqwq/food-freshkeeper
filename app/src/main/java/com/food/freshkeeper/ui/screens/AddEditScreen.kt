@@ -83,10 +83,11 @@ fun AddEditScreen(
     var shelfLifeNumberInput by remember { mutableStateOf("7") }
     var selectedUnit by remember { mutableStateOf(ShelfLifeUnit.DAY) }
 
+    val defaultReminderDays by viewModel.defaultReminderDays.collectAsState()
     var productionDateMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var quantity by remember { mutableStateOf("1份") }
     var notes by remember { mutableStateOf("") }
-    var reminderDaysBefore by remember { mutableIntStateOf(3) }
+    var reminderDaysBefore by remember(defaultReminderDays) { mutableIntStateOf(defaultReminderDays) }
 
     var showDiscardDialog by remember { mutableStateOf(false) }
 

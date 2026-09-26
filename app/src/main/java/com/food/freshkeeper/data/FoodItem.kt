@@ -74,22 +74,26 @@ data class FoodItem(
 
     /**
      * 当前状态
+     * @param thresholdDays 临期预警阈值天数 (优先使用传入值或食材本身的 reminderDaysBefore)
      */
-    fun getStatus(nowMs: Long = System.currentTimeMillis()): FoodStatus {
+    fun getStatus(nowMs: Long = System.currentTimeMillis(), thresholdDays: Int = reminderDaysBefore): FoodStatus {
         if (isConsumed) return FoodStatus.CONSUMED
         val days = remainingDays(nowMs)
+        val threshold = if (thresholdDays > 0) thresholdDays else 3
         return when {
             days < 0 -> FoodStatus.EXPIRED
             days == 0 -> FoodStatus.EXPIRING_TODAY
-            days <= 7 -> FoodStatus.URGENT
+            days <= threshold -> FoodStatus.URGENT
+            days <= threshold + 2 -> FoodStatus.WARNING
             else -> FoodStatus.FRESH
         }
     }
 
     /**
-     * 是否处于紧急临期状态 (0..7天且未消灭)
+     * 是否处于紧急临期状态
      */
-    fun isUrgent(nowMs: Long = System.currentTimeMillis()): Boolean {
-        return !isConsumed && remainingDays(nowMs) in 0..7
+    fun isUrgent(nowMs: Long = System.currentTimeMillis(), thresholdDays: Int = reminderDaysBefore): Boolean {
+        val threshold = if (thresholdDays > 0) thresholdDays else 3
+        return !isConsumed && remainingDays(nowMs) in 0..threshold
     }
 }
