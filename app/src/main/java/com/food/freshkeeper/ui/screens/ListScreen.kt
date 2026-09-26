@@ -11,11 +11,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +43,23 @@ fun ListScreen(
 
     val isBatchMode by viewModel.isBatchMode.collectAsState()
     val selectedFoodIds by viewModel.selectedFoodIds.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.refreshData {
+                pullToRefreshState.endRefresh()
+            }
+        }
+    }
+
+    LaunchedEffect(isRefreshing) {
+        if (!isRefreshing) {
+            pullToRefreshState.endRefresh()
+        }
+    }
 
     var showSortMenu by remember { mutableStateOf(false) }
 
@@ -234,61 +254,74 @@ fun ListScreen(
             }
         }
     ) { paddingValues ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
         ) {
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "找到 ${foods.size} 件物品",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (isBatchMode) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = "点击卡片勾选以批量删除",
+                            text = "找到 ${foods.size} 件物品",
                             fontSize = 12.sp,
-                            color = FreshGreenPrimary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (isBatchMode) {
+                            Text(
+                                text = "点击卡片勾选以批量删除",
+                                fontSize = 12.sp,
+                                color = FreshGreenPrimary
+                            )
+                        }
+                    }
+                }
+
+                if (foods.isEmpty()) {
+                    item {
+                        EmptyFoodState(
+                            title = "没有找到符合条件的食品 🔍",
+                            subTitle = "可以尝试切换筛选标签或搜索其他关键词哦",
+                            onAddClick = { navController.navigate("add_edit") }
+                        )
+                    }
+                } else {
+                    items(foods, key = { it.id }) { food ->
+                        FoodItemCard(
+                            food = food,
+                            onClick = { navController.navigate("detail/${food.id}") },
+                            onConsumeClick = { viewModel.markConsumed(food) },
+                            onDeleteClick = { viewModel.moveToTrash(food) },
+                            isBatchMode = isBatchMode,
+                            isSelected = selectedFoodIds.contains(food.id),
+                            onSelectToggle = { viewModel.toggleFoodSelection(food.id) }
                         )
                     }
                 }
-            }
 
-            if (foods.isEmpty()) {
                 item {
-                    EmptyFoodState(
-                        title = "没有找到符合条件的食品 🔍",
-                        subTitle = "可以尝试切换筛选标签或搜索其他关键词哦",
-                        onAddClick = { navController.navigate("add_edit") }
-                    )
-                }
-            } else {
-                items(foods, key = { it.id }) { food ->
-                    FoodItemCard(
-                        food = food,
-                        onClick = { navController.navigate("detail/${food.id}") },
-                        onConsumeClick = { viewModel.markConsumed(food) },
-                        onDeleteClick = { viewModel.moveToTrash(food) },
-                        isBatchMode = isBatchMode,
-                        isSelected = selectedFoodIds.contains(food.id),
-                        onSelectToggle = { viewModel.toggleFoodSelection(food.id) }
-                    )
+                    Spacer(modifier = Modifier.height(30.dp))
                 }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(30.dp))
-            }
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = FreshGreenPrimary
+            )
         }
     }
 }
