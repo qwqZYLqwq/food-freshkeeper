@@ -48,6 +48,7 @@ fun SettingsScreen(
     val lastSyncTimeMs by viewModel.lastSyncTimeMs.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val defaultReminderDays by viewModel.defaultReminderDays.collectAsState()
+    val notificationEnabled by viewModel.notificationEnabled.collectAsState()
 
     var inputServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
 
@@ -201,25 +202,66 @@ fun SettingsScreen(
             fontWeight = FontWeight.Bold
         )
 
-        // 1. 临期提醒偏好
+        // 1. 临期与消息通知偏好
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(18.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "🔔 临期与过期消息通知",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "在食材临近到期或已过期时向系统发送状态栏预警",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Switch(
+                        checked = notificationEnabled,
+                        onCheckedChange = { isChecked ->
+                            if (isChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                            }
+                            viewModel.setNotificationEnabled(isChecked)
+                            Toast.makeText(context, if (isChecked) "已开启消息通知提醒 🔔" else "已关闭消息通知提醒 🔕", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = FreshGreenPrimary
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(14.dp))
+
                 Text(
-                    text = "🔔 临期预警阈值",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "⏰ 临期预警阈值天数",
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "系统将在食材到期前向您高亮预警，避免遗忘导致变质。",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -264,6 +306,9 @@ fun SettingsScreen(
 
                 OutlinedButton(
                     onClick = {
+                        if (!notificationEnabled) {
+                            viewModel.setNotificationEnabled(true)
+                        }
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)

@@ -24,6 +24,7 @@ class SettingsRepository(private val context: Context) {
         val KEY_AUTO_SYNC_ENABLED = booleanPreferencesKey("auto_sync_enabled")
         val KEY_LAST_SYNC_TIME_MS = longPreferencesKey("last_sync_time_ms")
         val KEY_DEFAULT_REMINDER_DAYS = intPreferencesKey("default_reminder_days")
+        val KEY_NOTIFICATION_ENABLED = booleanPreferencesKey("notification_enabled")
     }
 
     val serverUrl: Flow<String> = context.settingsDataStore.data
@@ -74,6 +75,18 @@ class SettingsRepository(private val context: Context) {
             preferences[KEY_DEFAULT_REMINDER_DAYS] ?: 3
         }
 
+    val notificationEnabled: Flow<Boolean> = context.settingsDataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences ->
+            preferences[KEY_NOTIFICATION_ENABLED] ?: true
+        }
+
     suspend fun setServerUrl(url: String) {
         val trimmed = url.trim().removeSuffix("/")
         val normalized = when {
@@ -109,4 +122,10 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun saveReminderDays(days: Int) = setDefaultReminderDays(days)
+
+    suspend fun setNotificationEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[KEY_NOTIFICATION_ENABLED] = enabled
+        }
+    }
 }
