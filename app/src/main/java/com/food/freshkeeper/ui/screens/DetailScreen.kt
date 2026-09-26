@@ -1,5 +1,9 @@
 package com.food.freshkeeper.ui.screens
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -49,6 +53,16 @@ fun DetailScreen(
     val food by viewModel.getFoodById(foodId).collectAsState(initial = null)
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showImagePreview by remember { mutableStateOf(false) }
+
+    var isExpanded by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        isExpanded = true
+    }
+    val animProgress by animateFloatAsState(
+        targetValue = if (isExpanded) 1f else 0f,
+        animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+        label = "containerReflow"
+    )
 
     if (showDeleteConfirm && food != null) {
         AlertDialog(
@@ -113,6 +127,13 @@ fun DetailScreen(
             val expDateStr = dateFormat.format(Date(item.expiryDateMs))
             val days = item.remainingDays()
 
+            val imageSize = (54f + (110f - 54f) * animProgress).dp
+            val imageCorner = (16f + (26f - 16f) * animProgress).dp
+            val emojiSize = (28f + (56f - 28f) * animProgress).sp
+            val heroPadding = (14f + (20f - 14f) * animProgress).dp
+            val contentAlpha = animProgress.coerceIn(0f, 1f)
+            val contentOffsetY = ((1f - animProgress) * 20).dp
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -121,22 +142,24 @@ fun DetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 1. 顶部食材主角卡片 (支持上传的大图展示)
+                // 1. 顶部食材主角卡片 (平滑过渡展开与图文重排)
                 Card(
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize()
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
+                            .padding(heroPadding),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(110.dp)
-                                .clip(RoundedCornerShape(26.dp))
+                                .size(imageSize)
+                                .clip(RoundedCornerShape(imageCorner))
                                 .background(FreshGreenLight)
                                 .then(
                                     if (!item.imageUri.isNullOrBlank()) {
@@ -168,7 +191,7 @@ fun DetailScreen(
                                     )
                                 }
                             } else {
-                                Text(text = item.iconEmoji, fontSize = 56.sp)
+                                Text(text = item.iconEmoji, fontSize = emojiSize)
                             }
                         }
 
@@ -211,7 +234,12 @@ fun DetailScreen(
                 Card(
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            alpha = contentAlpha
+                            translationY = contentOffsetY.toPx()
+                        }
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         Text(
@@ -259,7 +287,12 @@ fun DetailScreen(
                     Card(
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = contentAlpha
+                                translationY = contentOffsetY.toPx()
+                            }
                     ) {
                         Column(modifier = Modifier.padding(18.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -280,7 +313,12 @@ fun DetailScreen(
                 Card(
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            alpha = contentAlpha
+                            translationY = contentOffsetY.toPx()
+                        }
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text(text = "快捷操作", fontWeight = FontWeight.Bold, fontSize = 14.sp)
