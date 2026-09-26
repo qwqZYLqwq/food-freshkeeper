@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +36,7 @@ import com.food.freshkeeper.ui.components.*
 import com.food.freshkeeper.ui.theme.*
 import java.util.Calendar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
@@ -55,6 +59,23 @@ fun HomeScreen(
     val expiredFoods by viewModel.expiredFoods.collectAsState()
     val consumedFoods by viewModel.consumedFoods.collectAsState()
     val trashFoods by viewModel.trashFoods.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.refreshData {
+                pullToRefreshState.endRefresh()
+            }
+        }
+    }
+
+    LaunchedEffect(isRefreshing) {
+        if (!isRefreshing) {
+            pullToRefreshState.endRefresh()
+        }
+    }
 
     // 庆祝弹窗
     val celebratedName by viewModel.celebratedFoodName.collectAsState()
@@ -82,13 +103,18 @@ fun HomeScreen(
             }
         }
     ) { paddingValues ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
         ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             // 1. 顶部生动问候与标题
             item {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -235,7 +261,15 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+
+        PullToRefreshContainer(
+            state = pullToRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter),
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = FreshGreenPrimary
+        )
     }
+}
 }
 
 @Composable

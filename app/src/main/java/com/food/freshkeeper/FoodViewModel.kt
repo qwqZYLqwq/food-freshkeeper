@@ -52,6 +52,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     val isSyncing = MutableStateFlow(false)
+    val isRefreshing = MutableStateFlow(false)
 
     val allFoods: StateFlow<List<FoodItem>>
     val activeFoods: StateFlow<List<FoodItem>>
@@ -335,6 +336,36 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 // 离线优先：自动同步失败静默忽略，绝不中断用户体验
+            }
+        }
+    }
+
+    /**
+     * 下拉刷新：重新刷新本地状态并在开启同步时静默同步
+     */
+    fun refreshData(onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            isRefreshing.value = true
+            try {
+                val url = serverUrl.value
+                val enabled = autoSyncEnabled.value
+                if (enabled && url.isNotBlank()) {
+                    withContext(Dispatchers.IO) {
+                        val imagesDir = getImagesDir()
+                        val result = syncClient.fetchFoods(url, imagesDir)
+                        if (result.isSuccess) {
+                            val remoteFoods = result.getOrNull() ?: emptyList()
+                            foodDao.insertAll(remoteFoods)
+                            settingsRepository.setLastSyncTime(System.currentTimeMillis())
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // 静默忽略
+            } finally {
+                kotlinx.coroutines.delay(350)
+                isRefreshing.value = false
+                onComplete?.invoke()
             }
         }
     }
