@@ -101,11 +101,14 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    // 临期食品 (0..7天且未过期)
-    val urgentFoods: StateFlow<List<FoodItem>> = activeFoods.map { list ->
-        list.filter {
-            val days = it.remainingDays()
-            days in 0..7
+    // 临期食品 (根据设置中的预警阈值天数动态筛选)
+    val urgentFoods: StateFlow<List<FoodItem>> = combine(
+        activeFoods,
+        defaultReminderDays
+    ) { list, threshold ->
+        list.filter { food ->
+            val days = food.remainingDays()
+            days in 0..threshold
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -119,8 +122,9 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         allFoods,
         searchQuery,
         selectedFilter,
-        sortOption
-    ) { foods, query, filter, sort ->
+        sortOption,
+        defaultReminderDays
+    ) { foods, query, filter, sort, threshold ->
         val trimmedQuery = query.trim().lowercase()
 
         // 1. 状态与位置筛选
@@ -130,7 +134,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 "冷藏" -> !food.isConsumed && food.location.contains("冷藏")
                 "冷冻" -> !food.isConsumed && food.location.contains("冷冻")
                 "常温" -> !food.isConsumed && food.location.contains("常温")
-                "紧急临期", "临期待吃" -> !food.isConsumed && food.remainingDays() in 0..7
+                "紧急临期", "临期待吃" -> !food.isConsumed && food.remainingDays() in 0..threshold
                 "已过期" -> !food.isConsumed && food.remainingDays() < 0
                 "已消灭" -> food.isConsumed
                 else -> true
