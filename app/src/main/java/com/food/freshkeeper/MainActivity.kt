@@ -149,7 +149,23 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
                     navArgument("foodId") {
                         type = NavType.LongType
                     }
-                )
+                ),
+                enterTransition = {
+                    androidx.compose.animation.fadeIn(animationSpec = tween(300)) +
+                    androidx.compose.animation.scaleIn(
+                        initialScale = 0.85f,
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.4f),
+                        animationSpec = tween(340, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                    )
+                },
+                popExitTransition = {
+                    androidx.compose.animation.fadeOut(animationSpec = tween(220)) +
+                    androidx.compose.animation.scaleOut(
+                        targetScale = 0.85f,
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.4f),
+                        animationSpec = tween(260, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                    )
+                }
             ) { backStackEntry ->
                 val foodId = backStackEntry.arguments?.getLong("foodId") ?: 0L
                 DetailScreen(
