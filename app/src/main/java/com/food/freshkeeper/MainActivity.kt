@@ -3,8 +3,9 @@ package com.food.freshkeeper
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -13,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -47,48 +49,11 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
     val tabOrder = remember { mapOf("home" to 0, "list" to 1, "tips" to 2, "settings" to 3) }
     var slideDirection by remember { mutableStateOf(AnimatedContentTransitionScope.SlideDirection.Left) }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            if (showBottomBar) {
-                AppBottomNavBar(
-                    currentRoute = currentRoute,
-                    onNavigate = { route ->
-                        if (route != currentRoute) {
-                            val fromIndex = tabOrder[currentRoute] ?: 0
-                            val toIndex = tabOrder[route] ?: 0
-                            slideDirection = if (toIndex >= fromIndex) {
-                                AnimatedContentTransitionScope.SlideDirection.Left
-                            } else {
-                                AnimatedContentTransitionScope.SlideDirection.Right
-                            }
-
-                            if (route == "home") {
-                                val popped = navController.popBackStack("home", inclusive = false)
-                                if (!popped) {
-                                    navController.navigate("home") {
-                                        launchSingleTop = true
-                                    }
-                                }
-                            } else {
-                                navController.navigate(route) {
-                                    popUpTo("home") {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
-                        }
-                    }
-                )
-            }
-        }
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
             startDestination = "home",
-            modifier = Modifier.padding(paddingValues),
+            modifier = Modifier.fillMaxSize(),
             // 菜单切换动画仅在四大 Tab 之间按空间相对位置平移，进入二级界面（如详情页）采用原地无滑动卡片扩展
             enterTransition = {
                 val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
@@ -200,6 +165,45 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
                     foodId = foodId
                 )
             }
+        }
+
+        AnimatedVisibility(
+            visible = showBottomBar,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
+            exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(200)) + fadeOut(animationSpec = tween(150))
+        ) {
+            AppBottomNavBar(
+                currentRoute = currentRoute,
+                onNavigate = { route ->
+                    if (route != currentRoute) {
+                        val fromIndex = tabOrder[currentRoute] ?: 0
+                        val toIndex = tabOrder[route] ?: 0
+                        slideDirection = if (toIndex >= fromIndex) {
+                            AnimatedContentTransitionScope.SlideDirection.Left
+                        } else {
+                            AnimatedContentTransitionScope.SlideDirection.Right
+                        }
+
+                        if (route == "home") {
+                            val popped = navController.popBackStack("home", inclusive = false)
+                            if (!popped) {
+                                navController.navigate("home") {
+                                    launchSingleTop = true
+                                }
+                            }
+                        } else {
+                            navController.navigate(route) {
+                                popUpTo("home") {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
+                }
+            )
         }
     }
 }
