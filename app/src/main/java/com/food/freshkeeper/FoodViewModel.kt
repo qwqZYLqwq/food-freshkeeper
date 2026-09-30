@@ -1,10 +1,12 @@
 package com.food.freshkeeper
 
 import android.app.Application
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.food.freshkeeper.data.*
+import com.food.freshkeeper.util.ImageSaver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -55,6 +57,12 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
         true
+    )
+
+    val imageSavePath: StateFlow<String> = settingsRepository.imageSavePathFlow.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        SettingsRepository.DEFAULT_IMAGE_SAVE_PATH
     )
 
     val isSyncing = MutableStateFlow(false)
@@ -404,6 +412,51 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             settingsRepository.setNotificationEnabled(enabled)
         }
     }
+
+    fun updateImageSavePath(path: String) {
+        viewModelScope.launch {
+            settingsRepository.setImageSavePath(path)
+        }
+    }
+
+    fun resetImageSavePath() {
+        viewModelScope.launch {
+            settingsRepository.resetImageSavePath()
+        }
+    }
+
+    fun saveFoodImageToPublicDownload(
+        context: Context,
+        imageUri: String,
+        foodName: String,
+        onResult: (Boolean, String) -> Unit
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val targetPath = imageSavePath.value
+            val result = ImageSaver.saveImage(
+                context = context,
+                sourceUriString = imageUri,
+                foodName = foodName,
+                targetRelativePath = targetPath
+            )
+            withContext(Dispatchers.Main) {
+                if (result.isSuccess) {
+                    val savedPath = result.getOrNull() ?: targetPath
+                    onResult(true, savedPath)
+                } else {
+                    val errMsg = result.exceptionOrNull()?.message ?: "保存图片失败"
+                    onResult(false, errMsg)
+                }
+            }
+        }
+    }
+
+    fun saveImageToPublicDownload(
+        context: Context,
+        imageUri: String,
+        foodName: String,
+        onResult: (Boolean, String) -> Unit
+    ) = saveFoodImageToPublicDownload(context, imageUri, foodName, onResult)
 
     // 手动网络同步操作
     fun testConnection(targetUrl: String? = null, onResult: (Boolean, String) -> Unit) {

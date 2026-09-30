@@ -2,6 +2,25 @@
 
 一款现代、轻量、高颜值的食品保质期管理与智能保鲜管家 Android 应用。基于 **Jetpack Compose** 与 **Material 3** 设计规范倾心打造，拒绝食材遗忘与浪费！
 
+## 🆕 V1.5.0 版本更新日志
+
+- 💾 **食材大图预览支持保存原图到本地存储 (R1)**：
+  - 食材档案详情页（DetailScreen）全屏大图预览界面右下角新增圆形下载浮动按钮。
+  - 点击即可将原图无损保存至系统公共下载目录（默认路径 `Download/food`）。
+  - 自动触发 MediaScanner 媒体库扫描，保存后在系统相册与文件管理器「Download/food」中即时可见。
+  - 完善 Scoped Storage（Android 10+ MediaStore）与 Android 9 及以下存储权限兼容性，提供精准的成功路径 Toast 提示。
+- 📁 **设置界面支持自定义图片导出保存路径 (R2)**：
+  - 「设置」页面新增「📁 图片保存目录」配置卡片，直观展示当前存储路径并支持自由修改子目录。
+  - 提供快速预设芯片（`food` / `FreshKeeper` / `食材图片`），支持一键“重置为默认”（`Download/food`）。
+  - 基于 Jetpack Preferences DataStore 实现本地持久化存储，重启应用持久生效。
+- 🎨 **应用桌面图标全面焕新 (R3)**：
+  - 桌面图标背景升级为纯白底色（`#FFFFFF`），居中搭配食材保鲜核心 emoji（🥬 蔬菜 / 食物保鲜 emoji）。
+  - 完整适配 Android 8.0+ 自适应图标（Adaptive Icon：纯白 background + 居中 safe zone foreground），同步更新全套 5 密度 mipmap 资源（mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi）。
+  - 保证在各大手机厂商桌面、圆形与方圆形遮罩下不失真、无畸变与杂边。
+- 🚀 **版本升级与正式包发布 (R4)**：
+  - 应用版本号正式升级至 V1.5 (`versionCode = 7`, `versionName = "1.5.0"`)。
+  - 执行正式发布编译构建，生成 `FoodFreshKeeper_v1.5.0.apk` 与 `鲜食记_v1.5.0.apk`。
+
 ---
 
 ## 🆕 V1.4.5 版本更新日志
@@ -68,7 +87,7 @@
 - 💡 **保鲜保质妙招库**：内置丰富的食物保存科学指南与实用收纳保鲜建议。
 - 🗑️ **食材回收站机制**：支持食材安全归档与防手滑误删还原。
 - ☁️ **自主可控数据同步**：支持私有部署轻量同步服务，保障全量数据隐私安全。
-- 🥗 **精美专属图标**：定制化沙拉碗应用桌面图标与视觉标识。
+- 🥬 **精美专属图标**：纯白底色搭配食材保鲜核心 emoji 桌面自适应图标与视觉标识。
 
 ---
 
@@ -127,4 +146,4 @@ PORT=8099 ./start.sh
 
 ## 📦 下载安装
 
-前往 [Releases 页面](https://github.com/qwqZYLqwq/food-freshkeeper/releases) 下载最新版本 `鲜食记_v1.3.0.apk` 即可直接安装体验。
+前往 [Releases 页面](https://github.com/qwqZYLqwq/food-freshkeeper/releases) 下载最新版本 `鲜食记_v1.5.0.apk` 即可直接安装体验。

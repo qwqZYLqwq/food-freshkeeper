@@ -70,7 +70,7 @@ object BackupManager {
 
                 // 2. 打包 JSON 元数据
                 val rootJson = JSONObject().apply {
-                    put("version", "1.3.0")
+                    put("version", "1.5.0")
                     put("appName", "鲜食记")
                     put("exportTimeMs", System.currentTimeMillis())
                     put("count", foods.size)

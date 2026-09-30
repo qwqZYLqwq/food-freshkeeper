@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,6 +36,7 @@ import com.food.freshkeeper.FoodViewModel
 import com.food.freshkeeper.ui.theme.FreshGreenLight
 import com.food.freshkeeper.ui.theme.FreshGreenPrimary
 import com.food.freshkeeper.ui.theme.UrgentRed
+import com.food.freshkeeper.util.ImageSaver
 
 @Composable
 fun SettingsScreen(
@@ -49,8 +51,10 @@ fun SettingsScreen(
     val isSyncing by viewModel.isSyncing.collectAsState()
     val defaultReminderDays by viewModel.defaultReminderDays.collectAsState()
     val notificationEnabled by viewModel.notificationEnabled.collectAsState()
+    val imageSavePath by viewModel.imageSavePath.collectAsState()
 
     var inputServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
+    var inputImageSavePath by remember(imageSavePath) { mutableStateOf(imageSavePath) }
 
     var showAddSampleDialog by remember { mutableStateOf(false) }
     var showClearExpiredDialog by remember { mutableStateOf(false) }
@@ -61,7 +65,7 @@ fun SettingsScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            val (success, msg) = viewModel.sendTestExpiryNotification(context)
+            val (_, msg) = viewModel.sendTestExpiryNotification(context)
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(context, "通知权限被拒绝，请在系统设置中允许鲜食记发送通知", Toast.LENGTH_LONG).show()
@@ -315,7 +319,7 @@ fun SettingsScreen(
                                 return@OutlinedButton
                             }
                         }
-                        val (success, msg) = viewModel.sendTestExpiryNotification(context)
+                        val (_, msg) = viewModel.sendTestExpiryNotification(context)
                         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                     },
                     shape = RoundedCornerShape(12.dp),
@@ -411,7 +415,161 @@ fun SettingsScreen(
             }
         }
 
-        // 3. 云端同步与备份
+        // 3. 图片保存目录
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "📁 图片保存目录",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Text(
+                    text = "全屏查看食材照片时点击下载，将保存至系统公共下载区指定的子目录中。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                OutlinedTextField(
+                    value = inputImageSavePath,
+                    onValueChange = { inputImageSavePath = it },
+                    label = { Text("保存目标目录") },
+                    placeholder = { Text("默认: Download/food") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Folder,
+                            contentDescription = null,
+                            tint = FreshGreenPrimary
+                        )
+                    },
+                    trailingIcon = {
+                        if (inputImageSavePath.isNotBlank() && inputImageSavePath != imageSavePath) {
+                            IconButton(onClick = {
+                                val sanitized = ImageSaver.sanitizeImageSavePath(inputImageSavePath)
+                                inputImageSavePath = sanitized
+                                viewModel.updateImageSavePath(sanitized)
+                                Toast.makeText(context, "已保存目录设置: $sanitized", Toast.LENGTH_SHORT).show()
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "应用",
+                                    tint = FreshGreenPrimary
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                // 快捷预设标签组
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "快捷预设路径",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val presets = listOf("Download/food", "Download/鲜食记", "Download/食材档案")
+                        presets.forEach { preset ->
+                            val isSelected = imageSavePath == preset
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    inputImageSavePath = preset
+                                    viewModel.updateImageSavePath(preset)
+                                    Toast.makeText(context, "已切换保存目录: $preset", Toast.LENGTH_SHORT).show()
+                                },
+                                label = {
+                                    Text(
+                                        text = preset,
+                                        fontSize = 12.sp
+                                    )
+                                },
+                                leadingIcon = if (isSelected) {
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                } else null
+                            )
+                        }
+                    }
+                }
+
+                // 操作按钮
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.resetImageSavePath()
+                            inputImageSavePath = ImageSaver.DEFAULT_IMAGE_SAVE_PATH
+                            Toast.makeText(context, "已重置为默认保存目录: ${ImageSaver.DEFAULT_IMAGE_SAVE_PATH}", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.RestartAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("重置为默认", fontSize = 13.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            val sanitized = ImageSaver.sanitizeImageSavePath(inputImageSavePath)
+                            inputImageSavePath = sanitized
+                            viewModel.updateImageSavePath(sanitized)
+                            Toast.makeText(context, "已更新保存目录: $sanitized", Toast.LENGTH_SHORT).show()
+                        },
+                        enabled = inputImageSavePath.isNotBlank() && inputImageSavePath != imageSavePath,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Save,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("保存修改", fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+
+        // 4. 云端同步与备份
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -620,7 +778,7 @@ fun SettingsScreen(
             }
         }
 
-        // 4. 关于鲜食记
+        // 5. 关于鲜食记
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -650,7 +808,7 @@ fun SettingsScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "版本 v1.3.0",
+                    text = "版本 v1.5.0",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

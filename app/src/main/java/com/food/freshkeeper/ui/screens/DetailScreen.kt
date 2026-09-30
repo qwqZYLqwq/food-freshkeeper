@@ -1,5 +1,11 @@
 package com.food.freshkeeper.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -10,6 +16,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -26,11 +33,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.food.freshkeeper.FoodViewModel
@@ -50,9 +59,80 @@ fun DetailScreen(
     viewModel: FoodViewModel,
     foodId: Long
 ) {
+    val context = LocalContext.current
     val food by viewModel.getFoodById(foodId).collectAsState(initial = null)
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showImagePreview by remember { mutableStateOf(false) }
+    var isSavingImage by remember { mutableStateOf(false) }
+
+    val writePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val currentFood = food
+            val imageUri = currentFood?.imageUri
+            if (!imageUri.isNullOrBlank()) {
+                isSavingImage = true
+                viewModel.saveFoodImageToPublicDownload(
+                    context = context,
+                    imageUri = imageUri,
+                    foodName = currentFood.name
+                ) { success, resultMessage ->
+                    isSavingImage = false
+                    if (success) {
+                        Toast.makeText(context, "图片已保存至: $resultMessage", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(context, "保存失败: $resultMessage", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        } else {
+            Toast.makeText(context, "保存失败：需要存储读写权限才能保存图片", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val saveFoodImageAction: () -> Unit = {
+        val currentFood = food
+        val imageUri = currentFood?.imageUri
+        if (imageUri.isNullOrBlank()) {
+            Toast.makeText(context, "保存失败：当前食材无实物图片", Toast.LENGTH_SHORT).show()
+        } else {
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                    isSavingImage = true
+                    viewModel.saveFoodImageToPublicDownload(
+                        context = context,
+                        imageUri = imageUri,
+                        foodName = currentFood.name
+                    ) { success, resultMessage ->
+                        isSavingImage = false
+                        if (success) {
+                            Toast.makeText(context, "图片已保存至: $resultMessage", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(context, "保存失败: $resultMessage", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    writePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+            } else {
+                isSavingImage = true
+                viewModel.saveFoodImageToPublicDownload(
+                    context = context,
+                    imageUri = imageUri,
+                    foodName = currentFood.name
+                ) { success, resultMessage ->
+                    isSavingImage = false
+                    if (success) {
+                        Toast.makeText(context, "图片已保存至: $resultMessage", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(context, "保存失败: $resultMessage", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
 
     var isExpanded by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -487,6 +567,39 @@ fun DetailScreen(
                         fontSize = 12.sp,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
+                }
+
+                // 底部浮动下载按钮 (保存图片到公共下载目录)
+                FilledIconButton(
+                    onClick = {
+                        if (!isSavingImage) {
+                            saveFoodImageAction()
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 20.dp, bottom = 24.dp)
+                        .size(52.dp),
+                    shape = CircleShape,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = FreshGreenPrimary.copy(alpha = 0.88f),
+                        contentColor = Color.White
+                    )
+                ) {
+                    if (isSavingImage) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.5.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Download,
+                            contentDescription = "保存图片到本地",
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
                 }
             }
         }

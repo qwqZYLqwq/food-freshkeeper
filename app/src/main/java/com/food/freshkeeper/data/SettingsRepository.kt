@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.food.freshkeeper.util.ImageSaver
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -25,7 +26,23 @@ class SettingsRepository(private val context: Context) {
         val KEY_LAST_SYNC_TIME_MS = longPreferencesKey("last_sync_time_ms")
         val KEY_DEFAULT_REMINDER_DAYS = intPreferencesKey("default_reminder_days")
         val KEY_NOTIFICATION_ENABLED = booleanPreferencesKey("notification_enabled")
+        val KEY_IMAGE_SAVE_PATH = stringPreferencesKey("image_save_path")
+        const val DEFAULT_IMAGE_SAVE_PATH = "Download/food"
     }
+
+    val imageSavePathFlow: Flow<String> = context.settingsDataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences ->
+            preferences[KEY_IMAGE_SAVE_PATH]?.takeIf { it.isNotBlank() } ?: DEFAULT_IMAGE_SAVE_PATH
+        }
+
+    val imageSavePath: Flow<String> get() = imageSavePathFlow
 
     val serverUrl: Flow<String> = context.settingsDataStore.data
         .catch { exception ->
@@ -126,6 +143,19 @@ class SettingsRepository(private val context: Context) {
     suspend fun setNotificationEnabled(enabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[KEY_NOTIFICATION_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setImageSavePath(path: String) {
+        val sanitized = ImageSaver.sanitizeImageSavePath(path)
+        context.settingsDataStore.edit { preferences ->
+            preferences[KEY_IMAGE_SAVE_PATH] = sanitized
+        }
+    }
+
+    suspend fun resetImageSavePath() {
+        context.settingsDataStore.edit { preferences ->
+            preferences[KEY_IMAGE_SAVE_PATH] = DEFAULT_IMAGE_SAVE_PATH
         }
     }
 }

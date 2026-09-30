@@ -12,8 +12,8 @@ android {
         applicationId = "com.food.freshkeeper"
         minSdk = 26
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.4.5"
+        versionCode = 7
+        versionName = "1.5.0"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -78,6 +78,9 @@ dependencies {
     
     // Preferences DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
