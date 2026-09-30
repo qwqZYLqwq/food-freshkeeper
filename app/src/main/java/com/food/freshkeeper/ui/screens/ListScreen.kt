@@ -235,7 +235,8 @@ fun ListScreen(
                     text = { Text("移入回收站 (${selectedFoodIds.size})") },
                     containerColor = if (selectedFoodIds.isNotEmpty()) UrgentRed else Color.Gray,
                     contentColor = Color.White,
-                    shape = RoundedCornerShape(18.dp)
+                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier.padding(bottom = 88.dp)
                 )
             } else {
                 FloatingActionButton(
@@ -243,7 +244,9 @@ fun ListScreen(
                     shape = RoundedCornerShape(20.dp),
                     containerColor = FreshGreenPrimary,
                     contentColor = Color.White,
-                    modifier = Modifier.size(60.dp)
+                    modifier = Modifier
+                        .padding(bottom = 88.dp)
+                        .size(60.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,

@@ -93,7 +93,9 @@ fun HomeScreen(
                 shape = RoundedCornerShape(20.dp),
                 containerColor = FreshGreenPrimary,
                 contentColor = Color.White,
-                modifier = Modifier.size(60.dp)
+                modifier = Modifier
+                    .padding(bottom = 88.dp)
+                    .size(60.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
