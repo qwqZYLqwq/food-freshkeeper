@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.food.freshkeeper.FoodViewModel
+import com.food.freshkeeper.ui.theme.FreshGreenContainer
+import com.food.freshkeeper.ui.theme.FreshGreenDark
 import com.food.freshkeeper.ui.theme.FreshGreenLight
 import com.food.freshkeeper.ui.theme.FreshGreenPrimary
 import com.food.freshkeeper.ui.theme.UrgentRed
@@ -95,7 +97,7 @@ fun SettingsScreen(
     if (showAddSampleDialog) {
         AlertDialog(
             onDismissRequest = { showAddSampleDialog = false },
-            title = { Text("添加示范食材？") },
+            title = { Text("添加示范食材？", fontWeight = FontWeight.Bold) },
             text = { Text("确认添加内置示范食材？将向您的清单中注入常用的示范食材数据") },
             confirmButton = {
                 TextButton(
@@ -110,7 +112,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showAddSampleDialog = false }) {
-                    Text("取消")
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -119,7 +121,7 @@ fun SettingsScreen(
     if (showClearExpiredDialog) {
         AlertDialog(
             onDismissRequest = { showClearExpiredDialog = false },
-            title = { Text("清理所有已过期食材？") },
+            title = { Text("清理所有已过期食材？", fontWeight = FontWeight.Bold) },
             text = { Text("将批量将当前已过期未食用的食材移入回收站。") },
             confirmButton = {
                 TextButton(
@@ -134,7 +136,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearExpiredDialog = false }) {
-                    Text("取消")
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -143,7 +145,7 @@ fun SettingsScreen(
     if (showClearConsumedDialog) {
         AlertDialog(
             onDismissRequest = { showClearConsumedDialog = false },
-            title = { Text("清空已消灭历史？") },
+            title = { Text("清空已消灭历史？", fontWeight = FontWeight.Bold) },
             text = { Text("确定清空所有标记为已食用的历史记录吗？") },
             confirmButton = {
                 TextButton(
@@ -158,7 +160,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearConsumedDialog = false }) {
-                    Text("取消")
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -167,7 +169,7 @@ fun SettingsScreen(
     if (showRestoreDialog) {
         AlertDialog(
             onDismissRequest = { showRestoreDialog = false },
-            title = { Text("从云端同步还原？") },
+            title = { Text("从云端同步还原？", fontWeight = FontWeight.Bold) },
             text = { Text("将从云端服务器拉取食材清单并合并至本地数据库。已存在同 ID 食材将被更新，新食材将被添加。") },
             confirmButton = {
                 TextButton(
@@ -186,7 +188,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showRestoreDialog = false }) {
-                    Text("取消")
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -197,22 +199,24 @@ fun SettingsScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "系统与偏好设置 ⚙️",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            text = "系统与设置",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         // 1. 临期与消息通知偏好
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(18.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -220,13 +224,13 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "🔔 临期与过期消息通知",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = "临期与过期提醒",
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "在食材临近到期或已过期时向系统发送状态栏预警",
+                            text = "在食材临近到期或已过期时向系统发送状态栏通知",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -250,22 +254,22 @@ fun SettingsScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "⏰ 临期预警阈值天数",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                    text = "临期预警阈值天数",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "系统将在食材到期前向您高亮预警，避免遗忘导致变质。",
-                    fontSize = 12.sp,
+                    text = "系统将在食材到期前向您高亮预警，避免遗忘导致变质",
+                    fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -286,27 +290,33 @@ fun SettingsScreen(
                                 ) {
                                     Text(
                                         text = "${days}天",
-                                        fontSize = 13.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                         maxLines = 1,
-                                        softWrap = false,
                                         textAlign = TextAlign.Center
                                     )
                                 }
                             },
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = FreshGreenPrimary,
-                                selectedLabelColor = Color.White
+                                selectedLabelColor = Color.White,
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = Color.Transparent,
+                                selectedBorderColor = Color.Transparent
                             )
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedButton(
                     onClick = {
@@ -322,32 +332,32 @@ fun SettingsScreen(
                         val (_, msg) = viewModel.sendTestExpiryNotification(context)
                         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                     },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = FreshGreenPrimary),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("发送食物过期模拟通知 🔔", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("发送食物过期模拟通知", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
 
-        // 2. 回收站与数据管理 (Requirement 5)
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        // 2. 回收站与数据管理
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(18.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "🧹 回收站与数据管理",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "回收站与数据管理",
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                // 回收站入口
                 SettingActionRow(
                     title = "食材回收站",
                     subtitle = "当前有 ${trashFoods.size} 件已删除食材，可恢复或彻底清空",
@@ -356,27 +366,27 @@ fun SettingsScreen(
                     onClick = { navController.navigate("trash") }
                 )
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.surfaceVariant)
 
                 SettingActionRow(
                     title = "清理所有已过期食材",
-                    subtitle = "一键移出已过期未能食用的物品至回收站",
+                    subtitle = "一键将已过期未食用的物品移入回收站",
                     icon = Icons.Default.DeleteSweep,
                     tint = UrgentRed,
                     onClick = { showClearExpiredDialog = true }
                 )
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.surfaceVariant)
 
                 SettingActionRow(
                     title = "清空已消灭历史记录",
                     subtitle = "将已食用的食材历史档案移入回收站",
                     icon = Icons.Default.History,
-                    tint = MaterialTheme.colorScheme.onSurface,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     onClick = { showClearConsumedDialog = true }
                 )
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.surfaceVariant)
 
                 SettingActionRow(
                     title = "添加示范食材",
@@ -386,7 +396,7 @@ fun SettingsScreen(
                     onClick = { showAddSampleDialog = true }
                 )
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.surfaceVariant)
 
                 SettingActionRow(
                     title = "导出离线数据包 (ZIP)",
@@ -399,7 +409,7 @@ fun SettingsScreen(
                     }
                 )
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.surfaceVariant)
 
                 SettingActionRow(
                     title = "导入离线数据包 (ZIP)",
@@ -416,42 +426,39 @@ fun SettingsScreen(
         }
 
         // 3. 图片保存目录
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "📁 图片保存目录",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Text(
+                    text = "图片保存目录",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
 
                 Text(
                     text = "全屏查看食材照片时点击下载，将保存至系统公共下载区指定的子目录中。",
-                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 OutlinedTextField(
                     value = inputImageSavePath,
                     onValueChange = { inputImageSavePath = it },
-                    label = { Text("保存目标目录") },
+                    label = { Text("保存目标目录", fontSize = 13.sp) },
                     placeholder = { Text("默认: Download/food") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Folder,
                             contentDescription = null,
-                            tint = FreshGreenPrimary
+                            tint = FreshGreenPrimary,
+                            modifier = Modifier.size(18.dp)
                         )
                     },
                     trailingIcon = {
@@ -465,7 +472,8 @@ fun SettingsScreen(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "应用",
-                                    tint = FreshGreenPrimary
+                                    tint = FreshGreenPrimary,
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
@@ -476,21 +484,27 @@ fun SettingsScreen(
                         imeAction = ImeAction.Done
                     ),
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                        focusedBorderColor = FreshGreenPrimary,
+                        unfocusedBorderColor = Color.Transparent
+                    )
                 )
 
                 // 快捷预设标签组
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "快捷预设路径",
-                        style = MaterialTheme.typography.labelMedium,
+                        text = "快捷预设路径:",
+                        fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         val presets = listOf("Download/food", "Download/鲜食记", "Download/食材档案")
                         presets.forEach { preset ->
@@ -503,29 +517,28 @@ fun SettingsScreen(
                                     Toast.makeText(context, "已切换保存目录: $preset", Toast.LENGTH_SHORT).show()
                                 },
                                 label = {
-                                    Text(
-                                        text = preset,
-                                        fontSize = 12.sp
-                                    )
+                                    Text(text = preset, fontSize = 11.sp)
                                 },
-                                leadingIcon = if (isSelected) {
-                                    {
-                                        Icon(
-                                            imageVector = Icons.Default.Check,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                } else null
+                                shape = RoundedCornerShape(8.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = FreshGreenPrimary,
+                                    selectedLabelColor = Color.White,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = isSelected,
+                                    borderColor = Color.Transparent,
+                                    selectedBorderColor = Color.Transparent
+                                )
                             )
                         }
                     }
                 }
 
-                // 操作按钮
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(
                         onClick = {
@@ -534,15 +547,9 @@ fun SettingsScreen(
                             Toast.makeText(context, "已重置为默认保存目录: ${ImageSaver.DEFAULT_IMAGE_SAVE_PATH}", Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(10.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.RestartAlt,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("重置为默认", fontSize = 13.sp)
+                        Text("重置默认", fontSize = 12.sp)
                     }
 
                     Button(
@@ -555,43 +562,38 @@ fun SettingsScreen(
                         enabled = inputImageSavePath.isNotBlank() && inputImageSavePath != imageSavePath,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(10.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Save,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("保存修改", fontSize = 13.sp)
+                        Text("保存修改", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
         // 4. 云端同步与备份
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "☁️ 云端同步与备份",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = "云端同步与备份",
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
                     if (isSyncing) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(16.dp),
                             strokeWidth = 2.dp,
                             color = FreshGreenPrimary
                         )
@@ -600,14 +602,14 @@ fun SettingsScreen(
 
                 Text(
                     text = "支持自定义轻量 HTTP 同步服务，离线优先设计，保障食材数据安全。",
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 OutlinedTextField(
                     value = inputServerUrl,
                     onValueChange = { inputServerUrl = it },
-                    label = { Text("服务器地址与端口") },
+                    label = { Text("服务器地址与端口", fontSize = 13.sp) },
                     placeholder = { Text("例如: http://192.168.1.x:8099") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
@@ -616,6 +618,12 @@ fun SettingsScreen(
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                        focusedBorderColor = FreshGreenPrimary,
+                        unfocusedBorderColor = Color.Transparent
+                    ),
                     trailingIcon = {
                         if (inputServerUrl != serverUrl && inputServerUrl.isNotBlank()) {
                             IconButton(
@@ -624,7 +632,7 @@ fun SettingsScreen(
                                     Toast.makeText(context, "服务器地址已保存 💾", Toast.LENGTH_SHORT).show()
                                 }
                             ) {
-                                Icon(Icons.Default.Save, contentDescription = "保存地址", tint = FreshGreenPrimary)
+                                Icon(Icons.Default.Save, contentDescription = "保存地址", tint = FreshGreenPrimary, modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -646,13 +654,13 @@ fun SettingsScreen(
                             }
                         },
                         enabled = !isSyncing && inputServerUrl.isNotBlank(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary)
                     ) {
-                        Icon(Icons.Default.NetworkCheck, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("测试连接")
+                        Icon(Icons.Default.NetworkCheck, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("测试连接", fontSize = 12.sp)
                     }
 
                     OutlinedButton(
@@ -661,16 +669,16 @@ fun SettingsScreen(
                             Toast.makeText(context, "配置已保存 💾", Toast.LENGTH_SHORT).show()
                         },
                         enabled = inputServerUrl != serverUrl && inputServerUrl.isNotBlank(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("保存配置")
+                        Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("保存配置", fontSize = 12.sp)
                     }
                 }
 
-                HorizontalDivider()
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
                 // 自动同步开关
                 Row(
@@ -681,10 +689,10 @@ fun SettingsScreen(
                         Text(
                             text = "自动同步到云端",
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
+                            fontSize = 13.sp
                         )
                         Text(
-                            text = "增删改查食材时静默上传，离线时完全正常使用",
+                            text = "变更食材时静默上传，离线时完全正常使用",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -708,9 +716,8 @@ fun SettingsScreen(
                     )
                 }
 
-                HorizontalDivider()
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
-                // 手动同步操作按钮组
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -725,10 +732,10 @@ fun SettingsScreen(
                             }
                         },
                         enabled = !isSyncing && (inputServerUrl.isNotBlank() || serverUrl.isNotBlank()),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("上传本地清单", fontSize = 12.sp)
                     }
@@ -742,16 +749,15 @@ fun SettingsScreen(
                             }
                         },
                         enabled = !isSyncing && (inputServerUrl.isNotBlank() || serverUrl.isNotBlank()),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("从云端同步还原", fontSize = 12.sp)
+                        Text("从云端还原", fontSize = 12.sp)
                     }
                 }
 
-                // 上次同步时间显示
                 val syncTimeFormatted = if (lastSyncTimeMs > 0L) {
                     val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
                     sdf.format(java.util.Date(lastSyncTimeMs))
@@ -767,11 +773,11 @@ fun SettingsScreen(
                         imageVector = if (lastSyncTimeMs > 0L) Icons.Default.CloudDone else Icons.Default.CloudQueue,
                         contentDescription = null,
                         tint = if (lastSyncTimeMs > 0L) FreshGreenPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(14.dp)
                     )
                     Text(
                         text = "上次同步时间: $syncTimeFormatted",
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -779,48 +785,49 @@ fun SettingsScreen(
         }
 
         // 5. 关于鲜食记
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(FreshGreenLight),
+                        .size(54.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(FreshGreenLight.copy(alpha = 0.6f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "🥗", fontSize = 36.sp)
+                    Text(text = "🥗", fontSize = 28.sp)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
                     text = "鲜食记 · FoodFresh",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "版本 v1.6.5",
-                    fontSize = 12.sp,
+                    text = "版本 v1.7.0 · 现代扁平设计",
+                    fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "陪伴你的随身鲜味管家\n不浪费每一口舌尖上的美好 🌿",
-                    fontSize = 13.sp,
+                    text = "随身鲜味管家 · 不浪费舌尖上的美好 🌿",
+                    fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 20.sp,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -844,12 +851,21 @@ private fun SettingActionRow(
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.width(14.dp))
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(tint.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+        }
+        Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Text(text = title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
             Text(text = subtitle, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(18.dp))
     }
 }
+

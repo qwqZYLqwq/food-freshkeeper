@@ -10,14 +10,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.food.freshkeeper.ui.theme.FreshGreenContainer
+import com.food.freshkeeper.ui.theme.FreshGreenDark
 import com.food.freshkeeper.ui.theme.FreshGreenLight
 import com.food.freshkeeper.ui.theme.FreshGreenPrimary
-import com.food.freshkeeper.ui.theme.WarmOrangeLight
 
 data class FoodTipItem(
     val title: String,
@@ -78,20 +78,21 @@ fun TipsScreen() {
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Column {
                 Text(
-                    text = "食材保鲜小百科 💡",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    text = "保鲜小妙招",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "科学保存食材，锁住营养与原汁原味，告别浪费！",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "科学保存食材，锁住营养与原汁原味",
+                    fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -99,24 +100,25 @@ fun TipsScreen() {
         }
 
         items(TIPS_LIST) { tip ->
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            Surface(
+                shape = RoundedCornerShape(18.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(FreshGreenLight),
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(FreshGreenLight.copy(alpha = 0.6f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = tip.emoji, fontSize = 24.sp)
+                            Text(text = tip.emoji, fontSize = 22.sp)
                         }
 
                         Spacer(modifier = Modifier.width(12.dp))
@@ -124,8 +126,9 @@ fun TipsScreen() {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = tip.title,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = tip.category,
@@ -136,28 +139,28 @@ fun TipsScreen() {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text = tip.summary,
-                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                             .padding(10.dp)
                     ) {
                         Text(
                             text = tip.advice,
-                            fontSize = 12.sp,
-                            lineHeight = 18.sp,
+                            fontSize = 11.sp,
+                            lineHeight = 17.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -170,3 +173,4 @@ fun TipsScreen() {
         }
     }
 }
+

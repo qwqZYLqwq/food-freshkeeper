@@ -16,7 +16,6 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
@@ -25,8 +24,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.food.freshkeeper.FoodViewModel
 import com.food.freshkeeper.SortOption
-import com.food.freshkeeper.ui.components.EmptyFoodState
-import com.food.freshkeeper.ui.components.FoodItemCard
+import com.food.freshkeeper.ui.components.*
+import com.food.freshkeeper.ui.theme.FreshGreenContainer
+import com.food.freshkeeper.ui.theme.FreshGreenDark
 import com.food.freshkeeper.ui.theme.FreshGreenPrimary
 import com.food.freshkeeper.ui.theme.UrgentRed
 
@@ -74,7 +74,7 @@ fun ListScreen(
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
                     .padding(horizontal = 16.dp)
-                    .padding(top = 12.dp, bottom = 8.dp)
+                    .padding(top = 10.dp, bottom = 6.dp)
             ) {
                 // 页面标题与顶部操作栏
                 Row(
@@ -85,7 +85,7 @@ fun ListScreen(
                     if (isBatchMode) {
                         Text(
                             text = "已选 ${selectedFoodIds.size} 项",
-                            style = MaterialTheme.typography.titleMedium,
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                             color = FreshGreenPrimary
                         )
@@ -95,39 +95,51 @@ fun ListScreen(
                             ) {
                                 Text(
                                     if (selectedFoodIds.size == foods.size && foods.isNotEmpty()) "取消全选" else "全选",
-                                    fontSize = 13.sp
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             TextButton(
                                 onClick = { viewModel.exitBatchMode() }
                             ) {
-                                Text("完成", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text("完成", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = FreshGreenPrimary)
                             }
                         }
                     } else {
                         Text(
-                            text = "食品清单 📋",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
+                            text = "食材清单",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            // 回收站入口图标
+                            // 回收站入口
                             IconButton(onClick = { navController.navigate("trash") }) {
-                                Icon(Icons.Outlined.Delete, contentDescription = "回收站", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Icon(
+                                    Icons.Outlined.Delete,
+                                    contentDescription = "回收站",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
 
                             // 批量管理入口
                             TextButton(
                                 onClick = { viewModel.toggleBatchMode() }
                             ) {
-                                Text("批量管理", fontSize = 13.sp, color = FreshGreenPrimary)
+                                Text("批量管理", fontSize = 13.sp, color = FreshGreenPrimary, fontWeight = FontWeight.Medium)
                             }
 
                             // 排序按钮
                             Box {
                                 IconButton(onClick = { showSortMenu = true }) {
-                                    Icon(Icons.Default.Sort, contentDescription = "排序", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Icon(
+                                        Icons.Default.Sort,
+                                        contentDescription = "排序",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
 
                                 DropdownMenu(
@@ -155,46 +167,47 @@ fun ListScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // 搜索框
+                // 扁平纯净搜索框
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { viewModel.setSearchQuery(it) },
-                    placeholder = { Text("搜索食材、类别或备注...", fontSize = 14.sp) },
+                    placeholder = { Text("搜索食材、分类或备忘...", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)) },
                     leadingIcon = {
                         Icon(
                             Icons.Default.Search,
                             contentDescription = "搜索",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
                         )
                     },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { viewModel.setSearchQuery("") }) {
-                                Icon(Icons.Default.Clear, contentDescription = "清空")
+                                Icon(Icons.Default.Clear, contentDescription = "清空", modifier = Modifier.size(16.dp))
                             }
                         }
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                         focusedBorderColor = FreshGreenPrimary,
                         unfocusedBorderColor = Color.Transparent
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                // 滚动筛选标签
+                // 扁平微胶囊筛选标签
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     filterOptions.forEach { option ->
                         val isSelected = selectedFilter == option
@@ -208,17 +221,17 @@ fun ListScreen(
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
                             },
-                            shape = RoundedCornerShape(20.dp),
+                            shape = RoundedCornerShape(10.dp),
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = FreshGreenPrimary,
                                 selectedLabelColor = Color.White,
                                 containerColor = MaterialTheme.colorScheme.surface,
-                                labelColor = MaterialTheme.colorScheme.onSurface
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                             ),
                             border = FilterChipDefaults.filterChipBorder(
                                 enabled = true,
                                 selected = isSelected,
-                                borderColor = Color.Transparent,
+                                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
                                 selectedBorderColor = Color.Transparent
                             )
                         )
@@ -228,32 +241,14 @@ fun ListScreen(
         },
         floatingActionButton = {
             if (isBatchMode) {
-                // 批量删除浮动按钮
-                ExtendedFloatingActionButton(
-                    onClick = { viewModel.deleteSelectedBatch() },
-                    icon = { Icon(Icons.Default.Delete, contentDescription = "批量移入回收站") },
-                    text = { Text("移入回收站 (${selectedFoodIds.size})") },
-                    containerColor = if (selectedFoodIds.isNotEmpty()) UrgentRed else Color.Gray,
-                    contentColor = Color.White,
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier.padding(bottom = 88.dp)
+                FreshKeeperBatchDeleteFAB(
+                    count = selectedFoodIds.size,
+                    onClick = { viewModel.deleteSelectedBatch() }
                 )
             } else {
-                FloatingActionButton(
-                    onClick = { navController.navigate("add_edit") },
-                    shape = RoundedCornerShape(20.dp),
-                    containerColor = FreshGreenPrimary,
-                    contentColor = Color.White,
-                    modifier = Modifier
-                        .padding(bottom = 88.dp)
-                        .size(60.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "添加食品",
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                FreshKeeperFAB(
+                    onClick = { navController.navigate("add_edit") }
+                )
             }
         }
     ) { paddingValues ->
@@ -267,25 +262,25 @@ fun ListScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 item {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 2.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "找到 ${foods.size} 件物品",
+                            text = "共 ${foods.size} 件物品",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         if (isBatchMode) {
                             Text(
                                 text = "点击卡片勾选以批量删除",
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 color = FreshGreenPrimary
                             )
                         }
@@ -295,8 +290,8 @@ fun ListScreen(
                 if (foods.isEmpty()) {
                     item {
                         EmptyFoodState(
-                            title = "没有找到符合条件的食品 🔍",
-                            subTitle = "可以尝试切换筛选标签或搜索其他关键词哦",
+                            title = "未找到符合条件的食材",
+                            subTitle = "可以尝试切换标签或清除搜索词",
                             onAddClick = { navController.navigate("add_edit") }
                         )
                     }
@@ -315,7 +310,7 @@ fun ListScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(96.dp))
+                    Spacer(modifier = Modifier.height(115.dp))
                 }
             }
 
@@ -328,3 +323,4 @@ fun ListScreen(
         }
     }
 }
+

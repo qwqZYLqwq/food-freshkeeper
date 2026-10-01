@@ -24,17 +24,18 @@ private val LightColorScheme = lightColorScheme(
     onBackground = TextPrimary,
     onSurface = TextPrimary,
     onSurfaceVariant = TextSecondary,
-    outline = LightBorder
+    outline = LightBorder,
+    outlineVariant = LightDivider
 )
 
 private val DarkColorScheme = darkColorScheme(
     primary = FreshGreenPrimary,
     onPrimary = DarkBackground,
-    primaryContainer = FreshGreenDark,
+    primaryContainer = DarkSurfaceVariant,
     onPrimaryContainer = FreshGreenLight,
     secondary = WarmOrange,
     onSecondary = DarkBackground,
-    secondaryContainer = WarmOrangeDark,
+    secondaryContainer = DarkSurfaceVariant,
     onSecondaryContainer = WarmOrangeLight,
     background = DarkBackground,
     surface = DarkSurface,
@@ -42,7 +43,8 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = DarkTextPrimary,
     onSurface = DarkTextPrimary,
     onSurfaceVariant = DarkTextSecondary,
-    outline = DarkBorder
+    outline = DarkBorder,
+    outlineVariant = DarkBorder
 )
 
 @Composable
@@ -72,3 +74,4 @@ fun FoodKeeperTheme(
         content = content
     )
 }
+

@@ -23,6 +23,8 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.food.freshkeeper.FoodViewModel
 import com.food.freshkeeper.data.FoodItem
+import com.food.freshkeeper.ui.theme.FreshGreenContainer
+import com.food.freshkeeper.ui.theme.FreshGreenDark
 import com.food.freshkeeper.ui.theme.FreshGreenLight
 import com.food.freshkeeper.ui.theme.FreshGreenPrimary
 import com.food.freshkeeper.ui.theme.UrgentRed
@@ -43,8 +45,8 @@ fun TrashScreen(
     if (showEmptyTrashConfirm) {
         AlertDialog(
             onDismissRequest = { showEmptyTrashConfirm = false },
-            title = { Text("清空回收站？") },
-            text = { Text("清空后这些食材将彻底从手机中删除，不可恢复。") },
+            title = { Text("清空回收站？", fontWeight = FontWeight.Bold) },
+            text = { Text("清空后这些食材将彻底从本地数据库中删除，不可恢复。") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -57,7 +59,7 @@ fun TrashScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showEmptyTrashConfirm = false }) {
-                    Text("取消")
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -66,7 +68,7 @@ fun TrashScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("回收站 🗑️", fontWeight = FontWeight.Bold) },
+                title = { Text("回收站", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -77,12 +79,12 @@ fun TrashScreen(
                         TextButton(
                             onClick = { viewModel.restoreAllTrash() }
                         ) {
-                            Text("全部恢复", color = FreshGreenPrimary, fontWeight = FontWeight.SemiBold)
+                            Text("全部恢复", color = FreshGreenPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                         }
                         TextButton(
                             onClick = { showEmptyTrashConfirm = true }
                         ) {
-                            Text("清空", color = UrgentRed, fontWeight = FontWeight.SemiBold)
+                            Text("清空", color = UrgentRed, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                         }
                     }
                 },
@@ -97,26 +99,26 @@ fun TrashScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
-                Spacer(modifier = Modifier.height(4.dp))
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                Spacer(modifier = Modifier.height(2.dp))
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(14.dp),
+                        modifier = Modifier.padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "💡", fontSize = 18.sp)
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(text = "💡", fontSize = 16.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "移入回收站的食材随时可以点击「恢复」返回冰箱，或点击右上角彻底清空。",
-                            fontSize = 12.sp,
+                            text = "移入回收站的食材随时可点击「恢复」返回冰箱，或点击清空彻底删除。",
+                            fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            lineHeight = 18.sp
+                            lineHeight = 16.sp
                         )
                     }
                 }
@@ -130,17 +132,18 @@ fun TrashScreen(
                             .padding(vertical = 60.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("🍃 ✨", fontSize = 48.sp)
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Text("🗑️", fontSize = 42.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "回收站是空的",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "没有被删除的食材记录",
-                            fontSize = 13.sp,
+                            text = "没有被移入回收站的食材记录",
+                            fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -171,24 +174,23 @@ fun TrashFoodItemCard(
     val dateFormat = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault())
     val deleteTimeStr = if (food.deletedAtMs != null) dateFormat.format(Date(food.deletedAtMs)) else "未知时间"
 
-    Card(
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 图标或照片
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(FreshGreenLight),
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(FreshGreenLight.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
                 if (!food.imageUri.isNullOrBlank()) {
@@ -199,7 +201,7 @@ fun TrashFoodItemCard(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    Text(text = food.iconEmoji, fontSize = 24.sp)
+                    Text(text = food.iconEmoji, fontSize = 22.sp)
                 }
             }
 
@@ -208,8 +210,9 @@ fun TrashFoodItemCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = food.name,
-                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -222,33 +225,37 @@ fun TrashFoodItemCard(
                 Text(
                     text = "删除于: $deleteTimeStr",
                     fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
 
-            // 操作按钮：恢复与彻底删除
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                 FilledTonalButton(
                     onClick = onRestore,
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                    modifier = Modifier.height(32.dp)
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = FreshGreenContainer,
+                        contentColor = FreshGreenDark
+                    ),
+                    modifier = Modifier.height(28.dp)
                 ) {
-                    Text("恢复", fontSize = 12.sp, color = FreshGreenPrimary, fontWeight = FontWeight.Bold)
+                    Text("恢复", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
 
                 IconButton(
                     onClick = onPermanentDelete,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(28.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "彻底删除",
-                        tint = UrgentRed.copy(alpha = 0.8f),
-                        modifier = Modifier.size(18.dp)
+                        tint = UrgentRed.copy(alpha = 0.7f),
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
         }
     }
 }
+

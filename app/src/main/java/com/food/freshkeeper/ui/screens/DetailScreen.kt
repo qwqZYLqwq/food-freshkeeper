@@ -147,7 +147,7 @@ fun DetailScreen(
     if (showDeleteConfirm && food != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("移入回收站？") },
+            title = { Text("移入回收站？", fontWeight = FontWeight.Bold) },
             text = { Text("「${food!!.name}」将被移入回收站，随时可恢复，不影响当前新鲜度统计。") },
             confirmButton = {
                 TextButton(
@@ -162,7 +162,7 @@ fun DetailScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text("取消")
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -171,7 +171,7 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("食材档案 📖", fontWeight = FontWeight.Bold) },
+                title = { Text("食材详情", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -179,7 +179,7 @@ fun DetailScreen(
                 },
                 actions = {
                     IconButton(onClick = { navController.navigate("add_edit?foodId=$foodId") }) {
-                        Icon(Icons.Default.Edit, contentDescription = "编辑")
+                        Icon(Icons.Default.Edit, contentDescription = "编辑", tint = FreshGreenPrimary)
                     }
                     IconButton(onClick = { showDeleteConfirm = true }) {
                         Icon(Icons.Default.DeleteOutline, contentDescription = "删除", tint = UrgentRed)
@@ -207,9 +207,9 @@ fun DetailScreen(
             val expDateStr = dateFormat.format(Date(item.expiryDateMs))
             val days = item.remainingDays()
 
-            val imageSize = (54f + (110f - 54f) * animProgress).dp
-            val imageCorner = (16f + (26f - 16f) * animProgress).dp
-            val emojiSize = (28f + (56f - 28f) * animProgress).sp
+            val imageSize = (54f + (100f - 54f) * animProgress).dp
+            val imageCorner = (14f + (22f - 14f) * animProgress).dp
+            val emojiSize = (28f + (50f - 28f) * animProgress).sp
             val heroPadding = (14f + (20f - 14f) * animProgress).dp
             val contentAlpha = animProgress.coerceIn(0f, 1f)
             val contentOffsetY = ((1f - animProgress) * 20).dp
@@ -220,12 +220,13 @@ fun DetailScreen(
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // 1. 顶部食材主角卡片 (平滑过渡展开与图文重排)
-                Card(
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                // 1. 顶部食材主角卡片
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateContentSize()
@@ -240,7 +241,7 @@ fun DetailScreen(
                             modifier = Modifier
                                 .size(imageSize)
                                 .clip(RoundedCornerShape(imageCorner))
-                                .background(FreshGreenLight)
+                                .background(FreshGreenLight.copy(alpha = 0.6f))
                                 .then(
                                     if (!item.imageUri.isNullOrBlank()) {
                                         Modifier.clickable { showImagePreview = true }
@@ -259,15 +260,15 @@ fun DetailScreen(
                                     modifier = Modifier
                                         .align(Alignment.BottomEnd)
                                         .padding(4.dp)
-                                        .size(22.dp)
-                                        .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp)),
+                                        .size(20.dp)
+                                        .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(6.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ZoomIn,
                                         contentDescription = "查看大图",
                                         tint = Color.White,
-                                        modifier = Modifier.size(15.dp)
+                                        modifier = Modifier.size(14.dp)
                                     )
                                 }
                             } else {
@@ -275,15 +276,16 @@ fun DetailScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
                             text = item.name,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
 
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -292,28 +294,29 @@ fun DetailScreen(
                             FoodLocationTag(item.location)
                             Text(
                                 text = "·  ${item.category}",
-                                style = MaterialTheme.typography.bodyMedium,
+                                fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             if (item.quantity.isNotBlank()) {
                                 Text(
                                     text = "·  ${item.quantity}",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
                         ExpiryStatusBadge(food = item)
                     }
                 }
 
-                // 2. 新鲜度与保质时间轴
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                // 2. 新鲜度与保质时间信息卡
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .graphicsLayer {
@@ -321,14 +324,15 @@ fun DetailScreen(
                             translationY = contentOffsetY.toPx()
                         }
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
+                    Column(modifier = Modifier.padding(18.dp)) {
                         Text(
-                            text = "保质状态清晰总览",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            text = "保质状态总览",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         FreshnessProgressBar(
                             progress = item.freshnessProgress(),
@@ -352,8 +356,8 @@ fun DetailScreen(
                             label = "赏味倒计时",
                             value = when {
                                 item.isConsumed -> "已消灭 ✨"
-                                days < 0 -> "已过期 ${-days} 天 ⚠️"
-                                days == 0 -> "今天截止！🔥"
+                                days < 0 -> "已过期 ${-days} 天"
+                                days == 0 -> "今天截止！"
                                 else -> "还剩 $days 天"
                             },
                             icon = Icons.Default.Timer,
@@ -362,11 +366,12 @@ fun DetailScreen(
                     }
                 }
 
-                // 3. 备注备忘与贴心建议
+                // 3. 备忘灵感卡
                 if (item.notes.isNotBlank()) {
-                    Card(
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
                         modifier = Modifier
                             .fillMaxWidth()
                             .graphicsLayer {
@@ -374,25 +379,24 @@ fun DetailScreen(
                                 translationY = contentOffsetY.toPx()
                             }
                     ) {
-                        Column(modifier = Modifier.padding(18.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "💡 备忘与享用灵感", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(text = "备忘与保存笔记", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = item.notes,
-                                style = MaterialTheme.typography.bodyMedium,
+                                fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                lineHeight = 20.sp
+                                lineHeight = 19.sp
                             )
                         }
                     }
                 }
 
-                // 4. 底部快捷操作卡 (已根据升级需求去除不合理的+3天保质期延长)
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                // 4. 底部快捷操作卡
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .graphicsLayer {
@@ -400,9 +404,9 @@ fun DetailScreen(
                             translationY = contentOffsetY.toPx()
                         }
                 ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Text(text = "快捷操作", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         if (!item.isConsumed) {
                             Button(
@@ -410,34 +414,34 @@ fun DetailScreen(
                                     viewModel.markConsumed(item)
                                     navController.popBackStack()
                                 },
-                                shape = RoundedCornerShape(14.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Icon(Icons.Default.CheckCircle, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("消灭它！标记已食用 🎉", fontWeight = FontWeight.Bold)
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("消灭它！标记已食用", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                             }
 
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
                             OutlinedButton(
                                 onClick = { showDeleteConfirm = true },
-                                shape = RoundedCornerShape(14.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = UrgentRed),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("移入回收站")
+                                Text("移入回收站", fontSize = 13.sp)
                             }
                         } else {
                             OutlinedButton(
                                 onClick = { viewModel.markActive(item) },
-                                shape = RoundedCornerShape(14.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("恢复为储藏中 ↩️")
+                                Text("恢复为储藏中 ↩️", fontSize = 13.sp)
                             }
                         }
                     }
@@ -486,7 +490,6 @@ fun DetailScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // 顶部标题与关闭按钮
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -498,13 +501,13 @@ fun DetailScreen(
                             Text(
                                 text = food!!.name,
                                 color = Color.White,
-                                style = MaterialTheme.typography.titleLarge,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "食材实物档案照片 📸 (双指捏合或双击放大)",
+                                text = "实物档案照片 (可捏合或双击放大)",
                                 color = Color.White.copy(alpha = 0.7f),
-                                fontSize = 12.sp
+                                fontSize = 11.sp
                             )
                         }
 
@@ -523,7 +526,6 @@ fun DetailScreen(
                         }
                     }
 
-                    // 中间大图自适应展示 (支持手势缩放与双击缩放)
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -556,20 +558,18 @@ fun DetailScreen(
                                         }
                                     )
                                 }
-                                .clip(RoundedCornerShape(18.dp))
+                                .clip(RoundedCornerShape(16.dp))
                         )
                     }
 
-                    // 底部提示
                     Text(
-                        text = "双指缩放 · 双击切换放大 · 点击空白关闭",
+                        text = "双击切换放大 · 点击空白关闭",
                         color = Color.White.copy(alpha = 0.5f),
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                 }
 
-                // 底部浮动下载按钮 (保存图片到公共下载目录)
                 FilledIconButton(
                     onClick = {
                         if (!isSavingImage) {
@@ -579,25 +579,25 @@ fun DetailScreen(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 20.dp, bottom = 24.dp)
-                        .size(52.dp),
+                        .size(48.dp),
                     shape = CircleShape,
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = FreshGreenPrimary.copy(alpha = 0.88f),
+                        containerColor = FreshGreenPrimary,
                         contentColor = Color.White
                     )
                 ) {
                     if (isSavingImage) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(20.dp),
                             color = Color.White,
-                            strokeWidth = 2.5.dp
+                            strokeWidth = 2.dp
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Default.Download,
                             contentDescription = "保存图片到本地",
                             tint = Color.White,
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
@@ -623,20 +623,21 @@ private fun DetailInfoRow(
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(15.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = label,
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         Text(
             text = value,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             color = valueColor
         )
     }
 }
+

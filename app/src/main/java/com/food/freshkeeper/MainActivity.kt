@@ -12,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -251,7 +252,9 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
 
         AnimatedVisibility(
             visible = showBottomBar,
-            modifier = Modifier.align(Alignment.BottomCenter),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding(),
             enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
             exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(200)) + fadeOut(animationSpec = tween(150))
         ) {
