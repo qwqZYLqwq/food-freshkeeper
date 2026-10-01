@@ -271,7 +271,7 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    listOf(1, 3, 5, 7).forEach { days ->
+                    listOf(3, 7, 14, 30).forEach { days ->
                         val isSelected = defaultReminderDays == days
                         FilterChip(
                             selected = isSelected,
@@ -808,7 +808,7 @@ fun SettingsScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "版本 v1.5.0",
+                    text = "版本 v1.6.0",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -825,7 +825,7 @@ fun SettingsScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(100.dp))
     }
 }
 
