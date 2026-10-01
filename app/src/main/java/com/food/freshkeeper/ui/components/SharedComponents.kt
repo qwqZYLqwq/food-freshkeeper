@@ -371,7 +371,9 @@ fun FridgeHealthOverviewCard(
     expiredCount: Int,
     consumedCount: Int,
     trashCount: Int = 0,
+    onActiveClick: (() -> Unit)? = null,
     onUrgentClick: () -> Unit,
+    onExpiredClick: (() -> Unit)? = null,
     onTrashClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -449,6 +451,7 @@ fun FridgeHealthOverviewCard(
                     label = "储藏中",
                     emoji = "🥬",
                     color = SafeGreen,
+                    onClick = onActiveClick,
                     modifier = Modifier.weight(1f)
                 )
                 MetricPill(
@@ -464,6 +467,7 @@ fun FridgeHealthOverviewCard(
                     label = "已过期",
                     emoji = "⚠️",
                     color = UrgentRed,
+                    onClick = onExpiredClick,
                     modifier = Modifier.weight(1f)
                 )
                 MetricPill(

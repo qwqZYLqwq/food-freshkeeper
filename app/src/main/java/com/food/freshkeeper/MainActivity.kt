@@ -100,7 +100,6 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
     val showBottomBar = currentRoute in listOf("home", "list", "tips", "settings")
 
     val tabOrder = remember { mapOf("home" to 0, "list" to 1, "tips" to 2, "settings" to 3) }
-    var slideDirection by remember { mutableStateOf(AnimatedContentTransitionScope.SlideDirection.Left) }
 
     Box(
         modifier = Modifier
@@ -113,13 +112,19 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
-            // 菜单切换动画仅在四大 Tab 之间按空间相对位置平移，进入二级界面（如详情页）采用原地无滑动卡片扩展
+            // 菜单切换动画仅在四大 Tab 之间按空间相对位置平移（从左到右点击向左滑入，从右到左点击向右滑入）
             enterTransition = {
                 val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
                 val targetRoute = targetState.destination.route?.substringBefore("?")?.substringBefore("/")
-                val isTabSwitch = (initialRoute in tabOrder || initialRoute == null) && targetRoute in tabOrder
-                if (isTabSwitch) {
-                    slideIntoContainer(slideDirection, animationSpec = tween(220))
+                val fromIndex = tabOrder[initialRoute]
+                val toIndex = tabOrder[targetRoute]
+                if (fromIndex != null && toIndex != null) {
+                    val direction = if (toIndex >= fromIndex) {
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    } else {
+                        AnimatedContentTransitionScope.SlideDirection.Right
+                    }
+                    slideIntoContainer(direction, animationSpec = tween(220))
                 } else {
                     androidx.compose.animation.fadeIn(animationSpec = tween(250))
                 }
@@ -127,9 +132,15 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
             exitTransition = {
                 val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
                 val targetRoute = targetState.destination.route?.substringBefore("?")?.substringBefore("/")
-                val isTabSwitch = initialRoute in tabOrder && (targetRoute in tabOrder || targetRoute == null)
-                if (isTabSwitch) {
-                    slideOutOfContainer(slideDirection, animationSpec = tween(220))
+                val fromIndex = tabOrder[initialRoute]
+                val toIndex = tabOrder[targetRoute]
+                if (fromIndex != null && toIndex != null) {
+                    val direction = if (toIndex >= fromIndex) {
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    } else {
+                        AnimatedContentTransitionScope.SlideDirection.Right
+                    }
+                    slideOutOfContainer(direction, animationSpec = tween(220))
                 } else {
                     androidx.compose.animation.fadeOut(animationSpec = tween(200))
                 }
@@ -137,9 +148,15 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
             popEnterTransition = {
                 val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
                 val targetRoute = targetState.destination.route?.substringBefore("?")?.substringBefore("/")
-                val isTabSwitch = initialRoute in tabOrder && targetRoute in tabOrder
-                if (isTabSwitch) {
-                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(220))
+                val fromIndex = tabOrder[initialRoute]
+                val toIndex = tabOrder[targetRoute]
+                if (fromIndex != null && toIndex != null) {
+                    val direction = if (toIndex >= fromIndex) {
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    } else {
+                        AnimatedContentTransitionScope.SlideDirection.Right
+                    }
+                    slideIntoContainer(direction, animationSpec = tween(220))
                 } else {
                     androidx.compose.animation.fadeIn(animationSpec = tween(250))
                 }
@@ -147,9 +164,15 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
             popExitTransition = {
                 val initialRoute = initialState.destination.route?.substringBefore("?")?.substringBefore("/")
                 val targetRoute = targetState.destination.route?.substringBefore("?")?.substringBefore("/")
-                val isTabSwitch = initialRoute in tabOrder && targetRoute in tabOrder
-                if (isTabSwitch) {
-                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(220))
+                val fromIndex = tabOrder[initialRoute]
+                val toIndex = tabOrder[targetRoute]
+                if (fromIndex != null && toIndex != null) {
+                    val direction = if (toIndex >= fromIndex) {
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    } else {
+                        AnimatedContentTransitionScope.SlideDirection.Right
+                    }
+                    slideOutOfContainer(direction, animationSpec = tween(220))
                 } else {
                     androidx.compose.animation.fadeOut(animationSpec = tween(200))
                 }
@@ -236,14 +259,6 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
                 currentRoute = currentRoute,
                 onNavigate = { route ->
                     if (route != currentRoute) {
-                        val fromIndex = tabOrder[currentRoute] ?: 0
-                        val toIndex = tabOrder[route] ?: 0
-                        slideDirection = if (toIndex >= fromIndex) {
-                            AnimatedContentTransitionScope.SlideDirection.Left
-                        } else {
-                            AnimatedContentTransitionScope.SlideDirection.Right
-                        }
-
                         if (route == "home") {
                             val popped = navController.popBackStack("home", inclusive = false)
                             if (!popped) {

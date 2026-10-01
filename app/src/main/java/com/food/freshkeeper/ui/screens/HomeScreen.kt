@@ -131,8 +131,24 @@ fun HomeScreen(
                     expiredCount = expiredFoods.size,
                     consumedCount = consumedFoods.size,
                     trashCount = trashFoods.size,
+                    onActiveClick = {
+                        viewModel.setSelectedFilter("全部")
+                        navController.navigate("list") {
+                            popUpTo("home") { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     onUrgentClick = {
                         viewModel.setSelectedFilter("紧急临期")
+                        navController.navigate("list") {
+                            popUpTo("home") { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onExpiredClick = {
+                        viewModel.setSelectedFilter("已过期")
                         navController.navigate("list") {
                             popUpTo("home") { saveState = true }
                             launchSingleTop = true
