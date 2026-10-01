@@ -571,7 +571,7 @@ private fun FlatMetricPill(
 }
 
 /**
- * 现代液态玻璃悬浮底部导航栏 (1:1 深度对标 KernelSU / iOS 18 Liquid Glass 风格)
+ * 现代液态玻璃悬浮底部导航栏 (流光液态玻璃风格)
  * - 纯净双层液态高光与毛玻璃折射 (Liquid Specular Gradient & Frosted Translucency)
  * - 阻尼弹簧平滑滑动药丸指示器 (Spring Animated Lens Pill Indicator)
  * - 紧凑居中胶囊微岛，兼顾通透感与防误触
@@ -594,7 +594,7 @@ fun AppBottomNavBar(
 
     val selectedIndex = tabs.indexOfFirst { it.first == currentRoute }.coerceAtLeast(0)
 
-    // 阻尼弹簧平滑滑动位置动画 (与 KernelSU 物理弹簧阻尼动画一致)
+    // 阻尼弹簧平滑滑动位置动画 (物理弹簧阻尼效果)
     val animatedIndex by animateFloatAsState(
         targetValue = selectedIndex.toFloat(),
         animationSpec = androidx.compose.animation.core.spring(

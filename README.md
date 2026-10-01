@@ -1,11 +1,11 @@
 # 🥗 鲜食记 (Food FreshKeeper)
 
-一款现代、轻量、高颜值的食品保质期管理与智能保鲜管家 Android 应用。基于 **Jetpack Compose** 与 **Material 3** 设计规范倾心打造，采用现代扁平化美学与 KernelSU 风格液态玻璃质感，拒绝食材遗忘与浪费！
+一款现代、轻量、高颜值的食品保质期管理与智能保鲜管家 Android 应用。基于 **Jetpack Compose** 与 **Material 3** 设计规范倾心打造，采用现代扁平化美学与流光液态玻璃质感，拒绝食材遗忘与浪费！
 
 ## 🆕 V1.7.0 版本更新日志 (全新现代扁平化 UI 与液态玻璃悬浮底栏)
 
-- 🌊 **KernelSU 风格液态玻璃悬浮底栏 (Liquid Glass Dock)**：
-  - 参考优质开源工具交互质感，重塑底部导航栏为高透光磨砂液态玻璃悬浮胶囊坞站。
+- 🌊 **流光液态玻璃悬浮底栏 (Liquid Glass Dock)**：
+  - 采用高透光磨砂液态玻璃悬浮胶囊坞站设计。
   - 采用双峰镜面高光外轮廓（Dual-peak Specular Gradient Rim）与半透明亚克力玻璃材质，在浅色与深色模式下均晶莹通透。
   - 内置物理阻尼弹簧动画药丸滑块（`dampingRatio = 0.78f, stiffness = 380f`），在「首页、清单、妙招、设置」四大 Tab 间切换时呈现自然跟手的物理回弹动效。
   - 精准适配沉浸式手势导航条避让（`navigationBarsPadding`），悬浮高低恰到好处。
