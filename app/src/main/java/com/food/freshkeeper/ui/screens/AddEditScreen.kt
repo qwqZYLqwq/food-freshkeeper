@@ -93,9 +93,6 @@ fun AddEditScreen(
     var selectedQuantityUnit by remember { mutableStateOf("份") }
     var quantityUnitMenuExpanded by remember { mutableStateOf(false) }
 
-    // 编辑已有食材时的快捷消灭数量选择
-    var consumeCountInEdit by remember { androidx.compose.runtime.mutableIntStateOf(1) }
-
     var notes by remember { mutableStateOf("") }
     var reminderDaysBefore by remember(defaultReminderDays) { mutableIntStateOf(defaultReminderDays) }
 
@@ -154,7 +151,6 @@ fun AddEditScreen(
             val parsedQty = QuantityHelper.parse(food.quantity)
             quantityNumberInput = (parsedQty.count ?: 1).toString()
             selectedQuantityUnit = parsedQty.unit
-            consumeCountInEdit = 1
             notes = food.notes
             reminderDaysBefore = food.reminderDaysBefore
         }
@@ -851,101 +847,6 @@ fun AddEditScreen(
                                             quantityUnitMenuExpanded = false
                                         }
                                     )
-                                }
-                            }
-                        }
-                    }
-
-                    // 编辑模式下直接增加一行快捷消灭操作（不用弹出界面）
-                    val currentCount = quantityNumberInput.toIntOrNull() ?: 1
-                    val isDiscrete = QuantityHelper.DISCRETE_UNITS.contains(selectedQuantityUnit) ||
-                                     QuantityHelper.DISCRETE_UNITS.any { selectedQuantityUnit.startsWith(it) }
-
-                    if (isEditMode && isDiscrete && currentCount >= 1) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = FreshGreenLight.copy(alpha = 0.45f),
-                            border = BorderStroke(1.dp, FreshGreenPrimary.copy(alpha = 0.35f)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "🍽️ 快捷消灭 (当前剩 $currentCount$selectedQuantityUnit)",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = FreshGreenPrimary
-                                    )
-                                    Text(
-                                        text = "就地快速记录食用数量",
-                                        fontSize = 10.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    FilledTonalIconButton(
-                                        onClick = { if (consumeCountInEdit > 1) consumeCountInEdit-- },
-                                        enabled = consumeCountInEdit > 1,
-                                        modifier = Modifier.size(32.dp)
-                                    ) {
-                                        Icon(Icons.Default.Remove, contentDescription = "减少", modifier = Modifier.size(16.dp))
-                                    }
-
-                                    Text(
-                                        text = "$consumeCountInEdit$selectedQuantityUnit",
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-
-                                    FilledTonalIconButton(
-                                        onClick = { if (consumeCountInEdit < currentCount) consumeCountInEdit++ },
-                                        enabled = consumeCountInEdit < currentCount,
-                                        modifier = Modifier.size(32.dp)
-                                    ) {
-                                        Icon(Icons.Default.Add, contentDescription = "增加", modifier = Modifier.size(16.dp))
-                                    }
-
-                                    Button(
-                                        onClick = {
-                                            val remain = currentCount - consumeCountInEdit
-                                            if (remain <= 0) {
-                                                existingFood?.let {
-                                                    viewModel.markConsumed(it)
-                                                    Toast.makeText(context, "太棒啦！已全部消灭【${it.name}】🎉", Toast.LENGTH_SHORT).show()
-                                                }
-                                                navController.popBackStack()
-                                            } else {
-                                                quantityNumberInput = remain.toString()
-                                                existingFood?.let {
-                                                    viewModel.confirmConsume(it, consumeCountInEdit)
-                                                }
-                                                Toast.makeText(context, "已消灭 $consumeCountInEdit$selectedQuantityUnit，剩余 $remain$selectedQuantityUnit 😋", Toast.LENGTH_SHORT).show()
-                                                consumeCountInEdit = 1
-                                            }
-                                        },
-                                        shape = RoundedCornerShape(10.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
-                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                        modifier = Modifier.height(34.dp)
-                                    ) {
-                                        Text(
-                                            text = if (consumeCountInEdit == currentCount) "全消灭" else "消灭",
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
                                 }
                             }
                         }

@@ -44,6 +44,7 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.food.freshkeeper.FoodViewModel
 import com.food.freshkeeper.data.FoodItem
+import com.food.freshkeeper.data.QuantityHelper
 import com.food.freshkeeper.ui.components.ExpiryStatusBadge
 import com.food.freshkeeper.ui.components.FoodLocationTag
 import com.food.freshkeeper.ui.components.FreshnessProgressBar
@@ -409,19 +410,128 @@ fun DetailScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         if (!item.isConsumed) {
-                            Button(
-                                onClick = {
-                                    viewModel.requestConsume(item, onSingleConsumed = {
+                            val parsedQty = remember(item.quantity) { QuantityHelper.parse(item.quantity) }
+                            val currentQtyCount = (parsedQty.count ?: 1).coerceAtLeast(1)
+                            val qtyUnit = parsedQty.unit
+                            val isMultiDiscrete = parsedQty.isDiscrete && currentQtyCount > 1
+                            var consumeCountInDetail by remember(item.id, currentQtyCount) { mutableIntStateOf(1) }
+
+                            if (isMultiDiscrete) {
+                                // 离散多件快捷消灭行（无需弹窗，直接就地选择数量消灭）
+                                Surface(
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = FreshGreenLight.copy(alpha = 0.45f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, FreshGreenPrimary.copy(alpha = 0.35f)),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "🍽️ 快捷消灭",
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = FreshGreenPrimary
+                                            )
+                                            Text(
+                                                text = "当前剩 $currentQtyCount$qtyUnit",
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            FilledTonalIconButton(
+                                                onClick = { if (consumeCountInDetail > 1) consumeCountInDetail-- },
+                                                enabled = consumeCountInDetail > 1,
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(Icons.Default.Remove, contentDescription = "减少", modifier = Modifier.size(16.dp))
+                                            }
+
+                                            Text(
+                                                text = "$consumeCountInDetail$qtyUnit",
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+
+                                            FilledTonalIconButton(
+                                                onClick = { if (consumeCountInDetail < currentQtyCount) consumeCountInDetail++ },
+                                                enabled = consumeCountInDetail < currentQtyCount,
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(Icons.Default.Add, contentDescription = "增加", modifier = Modifier.size(16.dp))
+                                            }
+
+                                            Button(
+                                                onClick = {
+                                                    val remain = currentQtyCount - consumeCountInDetail
+                                                    if (remain <= 0) {
+                                                        viewModel.markConsumed(item)
+                                                        Toast.makeText(context, "太棒啦！已全部消灭【${item.name}】🎉", Toast.LENGTH_SHORT).show()
+                                                        navController.popBackStack()
+                                                    } else {
+                                                        viewModel.confirmConsume(item, consumeCountInDetail)
+                                                        Toast.makeText(context, "已消灭 $consumeCountInDetail$qtyUnit，剩余 $remain$qtyUnit 😋", Toast.LENGTH_SHORT).show()
+                                                        consumeCountInDetail = 1
+                                                    }
+                                                },
+                                                shape = RoundedCornerShape(10.dp),
+                                                colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                                modifier = Modifier.height(34.dp)
+                                            ) {
+                                                Text(
+                                                    text = if (consumeCountInDetail == currentQtyCount) "全消灭" else "消灭",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // 全部消灭按钮
+                                Button(
+                                    onClick = {
+                                        viewModel.markConsumed(item)
+                                        Toast.makeText(context, "太棒啦！已全部消灭【${item.name}】🎉", Toast.LENGTH_SHORT).show()
                                         navController.popBackStack()
-                                    })
-                                },
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("消灭它！标记已食用", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("全部消灭 (共 $currentQtyCount$qtyUnit)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                            } else {
+                                Button(
+                                    onClick = {
+                                        viewModel.markConsumed(item)
+                                        Toast.makeText(context, "太棒啦！已消灭【${item.name}】🎉", Toast.LENGTH_SHORT).show()
+                                        navController.popBackStack()
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("消灭它！标记已食用", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
