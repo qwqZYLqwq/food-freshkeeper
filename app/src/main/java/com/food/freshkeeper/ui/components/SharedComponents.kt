@@ -15,7 +15,9 @@ import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.food.freshkeeper.data.FoodItem
 import com.food.freshkeeper.data.FoodStatus
+import com.food.freshkeeper.data.QuantityHelper
 import com.food.freshkeeper.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -917,5 +920,173 @@ fun EmptyFoodState(
             }
         }
     }
+}
+
+/**
+ * 离散多件食物消灭数量选择对话框
+ */
+@Composable
+fun ConsumeQuantityDialog(
+    food: FoodItem,
+    onDismiss: () -> Unit,
+    onConfirm: (consumeCount: Int) -> Unit
+) {
+    val parsed = remember(food.quantity) { QuantityHelper.parse(food.quantity) }
+    val maxCount = (parsed.count ?: 1).coerceAtLeast(1)
+    val unit = parsed.unit
+    var countToConsume by remember(food.id) { mutableIntStateOf(1) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(CircleShape)
+                    .background(FreshGreenLight),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = food.iconEmoji.ifBlank { "🍽️" }, fontSize = 28.sp)
+            }
+        },
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "消灭食材 🍽️",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "当前库藏剩余 $maxCount$unit【${food.name}】",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Normal
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // 数量调节器卡片
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "选择本次消灭数量",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            FilledTonalIconButton(
+                                onClick = {
+                                    if (countToConsume > 1) countToConsume--
+                                },
+                                enabled = countToConsume > 1,
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(Icons.Default.Remove, contentDescription = "减少", modifier = Modifier.size(20.dp))
+                            }
+
+                            Spacer(modifier = Modifier.width(20.dp))
+
+                            Text(
+                                text = "$countToConsume $unit",
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = FreshGreenPrimary
+                            )
+
+                            Spacer(modifier = Modifier.width(20.dp))
+
+                            FilledTonalIconButton(
+                                onClick = {
+                                    if (countToConsume < maxCount) countToConsume++
+                                },
+                                enabled = countToConsume < maxCount,
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "增加", modifier = Modifier.size(20.dp))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        val remain = maxCount - countToConsume
+                        Text(
+                            text = if (remain > 0) "消灭后还剩 $remain $unit 留存" else "消灭后将全部吃完（标记为已食用）",
+                            fontSize = 12.sp,
+                            color = if (remain > 0) MaterialTheme.colorScheme.onSurfaceVariant else FreshGreenPrimary,
+                            fontWeight = if (remain == 0) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                }
+
+                if (maxCount > 2) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        SuggestionChip(
+                            onClick = { countToConsume = 1 },
+                            label = { Text("1$unit", fontSize = 11.sp) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        if (maxCount >= 4) {
+                            SuggestionChip(
+                                onClick = { countToConsume = maxCount / 2 },
+                                label = { Text("半数(${maxCount / 2}$unit)", fontSize = 11.sp) },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                        }
+                        SuggestionChip(
+                            onClick = { countToConsume = maxCount },
+                            label = { Text("全部($maxCount$unit)", fontSize = 11.sp) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(countToConsume) },
+                colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = if (countToConsume == maxCount) "全部消灭 ($countToConsume$unit)" else "消灭 $countToConsume $unit",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
 }
 

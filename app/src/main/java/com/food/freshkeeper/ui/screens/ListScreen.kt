@@ -300,7 +300,7 @@ fun ListScreen(
                         FoodItemCard(
                             food = food,
                             onClick = { navController.navigate("detail/${food.id}") },
-                            onConsumeClick = { viewModel.markConsumed(food) },
+                            onConsumeClick = { viewModel.requestConsume(food) },
                             onDeleteClick = { viewModel.moveToTrash(food) },
                             isBatchMode = isBatchMode,
                             isSelected = selectedFoodIds.contains(food.id),

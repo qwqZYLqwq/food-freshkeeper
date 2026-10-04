@@ -37,9 +37,11 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import androidx.compose.foundation.BorderStroke
 import com.food.freshkeeper.FoodViewModel
 import com.food.freshkeeper.data.FoodDataPresets
 import com.food.freshkeeper.data.FoodItem
+import com.food.freshkeeper.data.QuantityHelper
 import com.food.freshkeeper.ui.theme.*
 import kotlinx.coroutines.launch
 import java.io.File
@@ -85,7 +87,15 @@ fun AddEditScreen(
 
     val defaultReminderDays by viewModel.defaultReminderDays.collectAsState()
     var productionDateMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    var quantity by remember { mutableStateOf("1份") }
+
+    // 物品数量：左侧数字输入 + 右侧 select 下拉单选单位
+    var quantityNumberInput by remember { mutableStateOf("1") }
+    var selectedQuantityUnit by remember { mutableStateOf("份") }
+    var quantityUnitMenuExpanded by remember { mutableStateOf(false) }
+
+    // 编辑已有食材时的快捷消灭数量选择
+    var consumeCountInEdit by remember { androidx.compose.runtime.mutableIntStateOf(1) }
+
     var notes by remember { mutableStateOf("") }
     var reminderDaysBefore by remember(defaultReminderDays) { mutableIntStateOf(defaultReminderDays) }
 
@@ -93,7 +103,7 @@ fun AddEditScreen(
 
     val hasUnsavedChanges = remember(
         name, selectedCategory, iconEmoji, imageUriString,
-        selectedLocation, shelfLifeNumberInput, selectedUnit, quantity, notes
+        selectedLocation, shelfLifeNumberInput, selectedUnit, quantityNumberInput, selectedQuantityUnit, notes
     ) {
         !isEditMode && (
             name.isNotBlank() ||
@@ -103,7 +113,8 @@ fun AddEditScreen(
             selectedLocation != "冷藏室 🧊" ||
             shelfLifeNumberInput != "7" ||
             selectedUnit != ShelfLifeUnit.DAY ||
-            quantity != "1份" ||
+            quantityNumberInput != "1" ||
+            selectedQuantityUnit != "份" ||
             notes.isNotBlank()
         )
     }
@@ -140,7 +151,10 @@ fun AddEditScreen(
                 }
             }
             productionDateMs = food.productionDateMs
-            quantity = food.quantity
+            val parsedQty = QuantityHelper.parse(food.quantity)
+            quantityNumberInput = (parsedQty.count ?: 1).toString()
+            selectedQuantityUnit = parsedQty.unit
+            consumeCountInEdit = 1
             notes = food.notes
             reminderDaysBefore = food.reminderDaysBefore
         }
@@ -264,7 +278,7 @@ fun AddEditScreen(
                                     productionDateMs = productionDateMs,
                                     shelfLifeDays = calculatedTotalDays,
                                     expiryDateMs = calculatedExpiryDateMs,
-                                    quantity = quantity.trim(),
+                                    quantity = "${quantityNumberInput.ifBlank { "1" }}$selectedQuantityUnit".trim(),
                                     notes = notes.trim(),
                                     imageUri = imageUriString,
                                     reminderDaysBefore = reminderDaysBefore,
@@ -330,7 +344,9 @@ fun AddEditScreen(
                                     selectedLocation = preset.location
                                     shelfLifeNumberInput = preset.defaultShelfLifeDays.toString()
                                     selectedUnit = ShelfLifeUnit.DAY
-                                    quantity = preset.defaultQuantity
+                                    val parsedPreset = QuantityHelper.parse(preset.defaultQuantity)
+                                    quantityNumberInput = (parsedPreset.count ?: 1).toString()
+                                    selectedQuantityUnit = parsedPreset.unit
                                     notes = preset.storageTip
                                 },
                                 label = {
@@ -728,24 +744,212 @@ fun AddEditScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("规格与备忘", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("规格与数量", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    OutlinedTextField(
-                        value = quantity,
-                        onValueChange = { quantity = it },
-                        label = { Text("数量规格", fontSize = 13.sp) },
-                        placeholder = { Text("如：1盒、500g、2瓶") },
-                        singleLine = true,
+                    Text("物品数量与单位:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                            focusedBorderColor = FreshGreenPrimary,
-                            unfocusedBorderColor = Color.Transparent
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = quantityNumberInput,
+                            onValueChange = { input ->
+                                if (input.all { it.isDigit() } && input.length <= 5) {
+                                    quantityNumberInput = input
+                                }
+                            },
+                            placeholder = { Text("数量 如: 1") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1.3f),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                focusedBorderColor = FreshGreenPrimary,
+                                unfocusedBorderColor = Color.Transparent
+                            )
                         )
-                    )
+
+                        // Select 样式的单位单选下拉菜单
+                        Box(modifier = Modifier.weight(1f)) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                border = BorderStroke(1.dp, if (quantityUnitMenuExpanded) FreshGreenPrimary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp)
+                                    .clickable { quantityUnitMenuExpanded = true }
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = selectedQuantityUnit,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "选择单位",
+                                        tint = FreshGreenPrimary
+                                    )
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = quantityUnitMenuExpanded,
+                                onDismissRequest = { quantityUnitMenuExpanded = false },
+                                modifier = Modifier
+                                    .heightIn(max = 280.dp)
+                                    .background(MaterialTheme.colorScheme.surface)
+                            ) {
+                                val unitsList = remember(selectedQuantityUnit) {
+                                    if (selectedQuantityUnit !in QuantityHelper.ALL_UNITS) {
+                                        listOf(selectedQuantityUnit) + QuantityHelper.ALL_UNITS
+                                    } else {
+                                        QuantityHelper.ALL_UNITS
+                                    }
+                                }
+                                unitsList.forEach { unitItem ->
+                                    val isSelected = selectedQuantityUnit == unitItem
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = unitItem,
+                                                    fontSize = 14.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (isSelected) FreshGreenPrimary else MaterialTheme.colorScheme.onSurface
+                                                )
+                                                if (isSelected) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        tint = FreshGreenPrimary,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        onClick = {
+                                            selectedQuantityUnit = unitItem
+                                            quantityUnitMenuExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // 编辑模式下直接增加一行快捷消灭操作（不用弹出界面）
+                    val currentCount = quantityNumberInput.toIntOrNull() ?: 1
+                    val isDiscrete = QuantityHelper.DISCRETE_UNITS.contains(selectedQuantityUnit) ||
+                                     QuantityHelper.DISCRETE_UNITS.any { selectedQuantityUnit.startsWith(it) }
+
+                    if (isEditMode && isDiscrete && currentCount >= 1) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = FreshGreenLight.copy(alpha = 0.45f),
+                            border = BorderStroke(1.dp, FreshGreenPrimary.copy(alpha = 0.35f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "🍽️ 快捷消灭 (当前剩 $currentCount$selectedQuantityUnit)",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = FreshGreenPrimary
+                                    )
+                                    Text(
+                                        text = "就地快速记录食用数量",
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    FilledTonalIconButton(
+                                        onClick = { if (consumeCountInEdit > 1) consumeCountInEdit-- },
+                                        enabled = consumeCountInEdit > 1,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(Icons.Default.Remove, contentDescription = "减少", modifier = Modifier.size(16.dp))
+                                    }
+
+                                    Text(
+                                        text = "$consumeCountInEdit$selectedQuantityUnit",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+
+                                    FilledTonalIconButton(
+                                        onClick = { if (consumeCountInEdit < currentCount) consumeCountInEdit++ },
+                                        enabled = consumeCountInEdit < currentCount,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = "增加", modifier = Modifier.size(16.dp))
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            val remain = currentCount - consumeCountInEdit
+                                            if (remain <= 0) {
+                                                existingFood?.let {
+                                                    viewModel.markConsumed(it)
+                                                    Toast.makeText(context, "太棒啦！已全部消灭【${it.name}】🎉", Toast.LENGTH_SHORT).show()
+                                                }
+                                                navController.popBackStack()
+                                            } else {
+                                                quantityNumberInput = remain.toString()
+                                                existingFood?.let {
+                                                    viewModel.confirmConsume(it, consumeCountInEdit)
+                                                }
+                                                Toast.makeText(context, "已消灭 $consumeCountInEdit$selectedQuantityUnit，剩余 $remain$selectedQuantityUnit 😋", Toast.LENGTH_SHORT).show()
+                                                consumeCountInEdit = 1
+                                            }
+                                        },
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                        modifier = Modifier.height(34.dp)
+                                    ) {
+                                        Text(
+                                            text = if (consumeCountInEdit == currentCount) "全消灭" else "消灭",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(10.dp))
 

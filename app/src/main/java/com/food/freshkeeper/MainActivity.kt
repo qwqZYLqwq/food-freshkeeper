@@ -32,8 +32,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import android.widget.Toast
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import com.food.freshkeeper.data.NotificationHelper
 import com.food.freshkeeper.ui.components.AppBottomNavBar
+import com.food.freshkeeper.ui.components.ConsumeQuantityDialog
 import com.food.freshkeeper.ui.screens.*
 import com.food.freshkeeper.ui.theme.FoodKeeperTheme
 
@@ -101,6 +105,28 @@ fun FreshKeeperMainApp(viewModel: FoodViewModel = viewModel()) {
     val showBottomBar = currentRoute in listOf("home", "list", "tips", "settings")
 
     val tabOrder = remember { mapOf("home" to 0, "list" to 1, "tips" to 2, "settings" to 3) }
+    val foodToConsume by viewModel.foodToConsume.collectAsState()
+    val context = LocalContext.current
+
+    // 全局多件离散食物分批消灭对话框
+    foodToConsume?.let { food ->
+        ConsumeQuantityDialog(
+            food = food,
+            onDismiss = { viewModel.dismissConsumeDialog() },
+            onConfirm = { count ->
+                viewModel.confirmConsume(
+                    food = food,
+                    consumeCount = count,
+                    onRemaining = { remain, unit ->
+                        Toast.makeText(context, "已消灭 $count$unit，还剩 $remain$unit 留存 😋", Toast.LENGTH_SHORT).show()
+                    },
+                    onConsumedAll = {
+                        Toast.makeText(context, "太棒啦！已全部消灭【${food.name}】🎉", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+        )
+    }
 
     Box(
         modifier = Modifier

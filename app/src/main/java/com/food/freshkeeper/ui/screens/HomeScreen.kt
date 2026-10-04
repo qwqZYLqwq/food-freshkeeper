@@ -190,7 +190,7 @@ fun HomeScreen(
                                     UrgentFoodCard(
                                         food = food,
                                         onClick = { navController.navigate("detail/${food.id}") },
-                                        onConsume = { viewModel.markConsumed(food) }
+                                        onConsume = { viewModel.requestConsume(food) }
                                     )
                                 }
                             }
@@ -259,7 +259,7 @@ fun HomeScreen(
                         FoodItemCard(
                             food = food,
                             onClick = { navController.navigate("detail/${food.id}") },
-                            onConsumeClick = { viewModel.markConsumed(food) },
+                            onConsumeClick = { viewModel.requestConsume(food) },
                             onDeleteClick = { viewModel.moveToTrash(food) }
                         )
                     }

@@ -411,8 +411,9 @@ fun DetailScreen(
                         if (!item.isConsumed) {
                             Button(
                                 onClick = {
-                                    viewModel.markConsumed(item)
-                                    navController.popBackStack()
+                                    viewModel.requestConsume(item, onSingleConsumed = {
+                                        navController.popBackStack()
+                                    })
                                 },
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),

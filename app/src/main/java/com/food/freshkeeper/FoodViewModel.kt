@@ -85,6 +85,9 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     // 庆祝对话框触发食品名
     val celebratedFoodName = MutableStateFlow<String?>(null)
 
+    // 待分批消灭的食品（唤起分批消灭弹窗）
+    val foodToConsume = MutableStateFlow<FoodItem?>(null)
+
     init {
         val database = FoodDatabase.getDatabase(application, viewModelScope)
         foodDao = database.foodDao()
@@ -285,6 +288,52 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             repository.deletePermanently(id)
             triggerAutoUploadIfEnabled()
         }
+    }
+
+    /**
+     * 请求消灭食材：若为多件离散单位（如3包、5个），唤起弹窗选择数量；否则直接一键消灭
+     */
+    fun requestConsume(food: FoodItem, onSingleConsumed: (() -> Unit)? = null) {
+        if (QuantityHelper.isMultiDiscrete(food.quantity)) {
+            foodToConsume.value = food
+        } else {
+            markConsumed(food)
+            onSingleConsumed?.invoke()
+        }
+    }
+
+    fun dismissConsumeDialog() {
+        foodToConsume.value = null
+    }
+
+    /**
+     * 确认分批消灭：
+     * 如果消灭数量 >= 当前总数，则直接全部消灭
+     * 否则扣除相应数量并更新剩余数量，更新数据库
+     */
+    fun confirmConsume(
+        food: FoodItem,
+        consumeCount: Int,
+        onRemaining: ((remainCount: Int, unit: String) -> Unit)? = null,
+        onConsumedAll: (() -> Unit)? = null
+    ) {
+        val parsed = QuantityHelper.parse(food.quantity)
+        val currentCount = parsed.count ?: 1
+        val unit = parsed.unit
+
+        if (consumeCount >= currentCount) {
+            markConsumed(food)
+            onConsumedAll?.invoke()
+        } else {
+            val remain = currentCount - consumeCount
+            val updated = food.copy(quantity = "$remain$unit")
+            viewModelScope.launch {
+                repository.update(updated)
+                triggerAutoUploadIfEnabled()
+            }
+            onRemaining?.invoke(remain, unit)
+        }
+        foodToConsume.value = null
     }
 
     fun markConsumed(food: FoodItem) {

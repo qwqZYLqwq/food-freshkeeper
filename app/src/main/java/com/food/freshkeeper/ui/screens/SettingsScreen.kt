@@ -816,7 +816,7 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "版本 v1.7.0 · 现代扁平设计",
+                    text = "版本 v1.8.0 · 现代扁平设计",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
