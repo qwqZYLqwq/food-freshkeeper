@@ -33,11 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.food.freshkeeper.FoodViewModel
-import com.food.freshkeeper.ui.theme.FreshGreenContainer
-import com.food.freshkeeper.ui.theme.FreshGreenDark
-import com.food.freshkeeper.ui.theme.FreshGreenLight
-import com.food.freshkeeper.ui.theme.FreshGreenPrimary
-import com.food.freshkeeper.ui.theme.UrgentRed
+import com.food.freshkeeper.ui.theme.*
 import com.food.freshkeeper.util.ImageSaver
 
 @Composable
@@ -45,6 +41,10 @@ fun SettingsScreen(
     navController: NavHostController,
     viewModel: FoodViewModel
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val primaryColor = if (isDark) DarkFrostPrimary else FreshGreenPrimary
+    val urgentColor = if (isDark) DarkUrgentRed else UrgentRed
+
     val context = LocalContext.current
     val trashFoods by viewModel.trashFoods.collectAsState()
     val serverUrl by viewModel.serverUrl.collectAsState()
@@ -107,7 +107,7 @@ fun SettingsScreen(
                         Toast.makeText(context, "已成功添加示范食材 🥕", Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Text("确认添加", fontWeight = FontWeight.Bold, color = FreshGreenPrimary)
+                    Text("确认添加", fontWeight = FontWeight.Bold, color = primaryColor)
                 }
             },
             dismissButton = {
@@ -131,7 +131,7 @@ fun SettingsScreen(
                         Toast.makeText(context, "已过期食材已移入回收站 🧹", Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Text("移入回收站", color = UrgentRed, fontWeight = FontWeight.Bold)
+                    Text("移入回收站", color = urgentColor, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -155,7 +155,7 @@ fun SettingsScreen(
                         Toast.makeText(context, "历史记录已移入回收站", Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Text("清空", color = UrgentRed, fontWeight = FontWeight.Bold)
+                    Text("清空", color = urgentColor, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -183,7 +183,7 @@ fun SettingsScreen(
                         }
                     }
                 ) {
-                    Text("确认拉取还原", fontWeight = FontWeight.Bold, color = FreshGreenPrimary)
+                    Text("确认拉取还原", fontWeight = FontWeight.Bold, color = primaryColor)
                 }
             },
             dismissButton = {
@@ -249,7 +249,7 @@ fun SettingsScreen(
                         },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
-                            checkedTrackColor = FreshGreenPrimary
+                            checkedTrackColor = primaryColor
                         )
                     )
                 }
@@ -300,8 +300,8 @@ fun SettingsScreen(
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = FreshGreenPrimary,
-                                selectedLabelColor = Color.White,
+                                selectedContainerColor = primaryColor,
+                                selectedLabelColor = if (isDark) DarkBackground else Color.White,
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             ),
                             border = FilterChipDefaults.filterChipBorder(
@@ -333,7 +333,7 @@ fun SettingsScreen(
                         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                     },
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = FreshGreenPrimary),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = primaryColor),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -362,7 +362,7 @@ fun SettingsScreen(
                     title = "食材回收站",
                     subtitle = "当前有 ${trashFoods.size} 件已删除食材，可恢复或彻底清空",
                     icon = Icons.Outlined.Delete,
-                    tint = FreshGreenPrimary,
+                    tint = primaryColor,
                     onClick = { navController.navigate("trash") }
                 )
 
@@ -372,7 +372,7 @@ fun SettingsScreen(
                     title = "清理所有已过期食材",
                     subtitle = "一键将已过期未食用的物品移入回收站",
                     icon = Icons.Default.DeleteSweep,
-                    tint = UrgentRed,
+                    tint = urgentColor,
                     onClick = { showClearExpiredDialog = true }
                 )
 
@@ -392,7 +392,7 @@ fun SettingsScreen(
                     title = "添加示范食材",
                     subtitle = "向您的清单中注入常用的示范食材数据",
                     icon = Icons.Default.AddCircle,
-                    tint = FreshGreenPrimary,
+                    tint = primaryColor,
                     onClick = { showAddSampleDialog = true }
                 )
 
@@ -402,7 +402,7 @@ fun SettingsScreen(
                     title = "导出离线数据包 (ZIP)",
                     subtitle = "将所有食材数据与照片打包为单一 ZIP 归档",
                     icon = Icons.Default.Archive,
-                    tint = FreshGreenPrimary,
+                    tint = primaryColor,
                     onClick = {
                         val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
                         exportZipLauncher.launch("鲜食记_数据备份_$timestamp.zip")
@@ -415,7 +415,7 @@ fun SettingsScreen(
                     title = "导入离线数据包 (ZIP)",
                     subtitle = "从外部 ZIP 备份文件恢复食材数据与本地照片",
                     icon = Icons.Default.Unarchive,
-                    tint = FreshGreenPrimary,
+                    tint = primaryColor,
                     onClick = {
                         importZipLauncher.launch(
                             arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream", "*/*")
@@ -457,7 +457,7 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.Default.Folder,
                             contentDescription = null,
-                            tint = FreshGreenPrimary,
+                            tint = primaryColor,
                             modifier = Modifier.size(18.dp)
                         )
                     },
@@ -472,7 +472,7 @@ fun SettingsScreen(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "应用",
-                                    tint = FreshGreenPrimary,
+                                    tint = primaryColor,
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -488,7 +488,7 @@ fun SettingsScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                        focusedBorderColor = FreshGreenPrimary,
+                        focusedBorderColor = primaryColor,
                         unfocusedBorderColor = Color.Transparent
                     )
                 )
@@ -521,8 +521,8 @@ fun SettingsScreen(
                                 },
                                 shape = RoundedCornerShape(8.dp),
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = FreshGreenPrimary,
-                                    selectedLabelColor = Color.White,
+                                    selectedContainerColor = primaryColor,
+                                    selectedLabelColor = if (isDark) DarkBackground else Color.White,
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                 ),
                                 border = FilterChipDefaults.filterChipBorder(
@@ -561,7 +561,7 @@ fun SettingsScreen(
                         },
                         enabled = inputImageSavePath.isNotBlank() && inputImageSavePath != imageSavePath,
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("保存修改", fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -595,7 +595,7 @@ fun SettingsScreen(
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),
                             strokeWidth = 2.dp,
-                            color = FreshGreenPrimary
+                            color = primaryColor
                         )
                     }
                 }
@@ -621,7 +621,7 @@ fun SettingsScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                        focusedBorderColor = FreshGreenPrimary,
+                        focusedBorderColor = primaryColor,
                         unfocusedBorderColor = Color.Transparent
                     ),
                     trailingIcon = {
@@ -632,7 +632,7 @@ fun SettingsScreen(
                                     Toast.makeText(context, "服务器地址已保存 💾", Toast.LENGTH_SHORT).show()
                                 }
                             ) {
-                                Icon(Icons.Default.Save, contentDescription = "保存地址", tint = FreshGreenPrimary, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Save, contentDescription = "保存地址", tint = primaryColor, modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -656,7 +656,7 @@ fun SettingsScreen(
                         enabled = !isSyncing && inputServerUrl.isNotBlank(),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary)
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
                     ) {
                         Icon(Icons.Default.NetworkCheck, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
@@ -711,7 +711,7 @@ fun SettingsScreen(
                         },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
-                            checkedTrackColor = FreshGreenPrimary
+                            checkedTrackColor = primaryColor
                         )
                     )
                 }
@@ -772,7 +772,7 @@ fun SettingsScreen(
                     Icon(
                         imageVector = if (lastSyncTimeMs > 0L) Icons.Default.CloudDone else Icons.Default.CloudQueue,
                         contentDescription = null,
-                        tint = if (lastSyncTimeMs > 0L) FreshGreenPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (lastSyncTimeMs > 0L) primaryColor else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
@@ -801,7 +801,7 @@ fun SettingsScreen(
                     modifier = Modifier
                         .size(54.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(FreshGreenLight.copy(alpha = 0.6f)),
+                        .background(if (isDark) DarkFrostPrimaryContainer else FreshGreenLight.copy(alpha = 0.6f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(text = "🥗", fontSize = 28.sp)

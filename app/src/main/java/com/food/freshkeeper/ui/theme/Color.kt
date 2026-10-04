@@ -52,12 +52,42 @@ val TextPrimary = Color(0xFF0F172A)
 val TextSecondary = Color(0xFF475569)
 val TextMuted = Color(0xFF94A3B8)
 
-// 现代沉浸深色模式底色（深石板黑）
-val DarkBackground = Color(0xFF090D16)
-val DarkSurface = Color(0xFF131B2E)
-val DarkSurfaceVariant = Color(0xFF1E293B)
-val DarkBorder = Color(0xFF283548)
-val DarkTextPrimary = Color(0xFFF8FAFC)
-val DarkTextSecondary = Color(0xFF94A3B8)
-val DarkTextMuted = Color(0xFF64748B)
+// 现代沉浸深色模式底色（方案二：❄️ 霜晶极夜 Frost Obsidian - OLED纯黑与冰霜冷萃）
+val DarkBackground = Color(0xFF07080A)         // 极致纯粹 OLED 极夜曜黑
+val DarkSurface = Color(0xFF111317)            // 冷萃石墨黑卡片表面
+val DarkSurfaceVariant = Color(0xFF181B22)     // 冰晶冷岩次级衬底
+val DarkBorder = Color(0xFF1E222B)             // 0.8px 极细冷岩微边框
+val DarkTextPrimary = Color(0xFFFFFFFF)        // 纯净皓白
+val DarkTextSecondary = Color(0xFF858D9E)      // 冰晶冷银灰
+val DarkTextMuted = Color(0xFF5E6575)          // 弱化深冷灰
+
+// 深色模式专属高饱和荧光冰萃绿（Primary Dark）
+val DarkFrostPrimary = Color(0xFF00E599)       // 冰霜荧光冷萃绿
+val DarkFrostPrimaryDark = Color(0xFF00B377)
+val DarkFrostPrimaryLight = Color(0x3300E599)
+val DarkFrostPrimaryContainer = Color(0x2400E599)
+val DarkFrostSurface = Color(0xFF0C1612)
+
+// 深色模式专属霓虹与极光预警色系
+val DarkUrgentRed = Color(0xFFFF4D6D)          // 霓虹珊瑚红
+val DarkUrgentRedBg = Color(0x28FF4D6D)
+val DarkUrgentRedBorder = Color(0x4FFF4D6D)
+
+val DarkWarningAmber = Color(0xFFFFB703)       // 极光琥珀金
+val DarkWarningAmberBg = Color(0x28FFB703)
+val DarkWarningAmberBorder = Color(0x4FFFB703)
+
+val DarkFridgeBlue = Color(0xFF00B4D8)         // 冰川透蓝
+val DarkFridgeBlueBg = Color(0x2800B4D8)
+val DarkFridgeBlueBorder = Color(0x4F00B4D8)
+
+val DarkFreezerIndigo = Color(0xFF6366F1)      // 深空电光紫
+val DarkFreezerIndigoBg = Color(0x286366F1)
+val DarkFreezerIndigoBorder = Color(0x4F6366F1)
+
+val DarkPantryWarm = Color(0xFFF59E0B)         // 恒温暖金
+val DarkPantryWarmBg = Color(0x28F59E0B)
+val DarkPantryWarmBorder = Color(0x4FF59E0B)
+
+
 

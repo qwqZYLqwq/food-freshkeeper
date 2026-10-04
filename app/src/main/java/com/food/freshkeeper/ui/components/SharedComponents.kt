@@ -52,32 +52,32 @@ fun ExpiryStatusBadge(
 
     val (bg, fg, border, text) = when (status) {
         FoodStatus.CONSUMED -> if (isDark) {
-            Quad(Color(0xFF1E293B), Color(0xFF94A3B8), Color(0xFF334155), "已消灭")
+            Quad(Color(0xFF181B22), Color(0xFF858D9E), Color(0xFF262C38), "已消灭")
         } else {
             Quad(Color(0xFFF1F5F9), Color(0xFF64748B), Color(0xFFE2E8F0), "已消灭")
         }
         FoodStatus.EXPIRED -> if (isDark) {
-            Quad(UrgentRed.copy(alpha = 0.16f), UrgentRed, UrgentRed.copy(alpha = 0.35f), "已过期 ${-days}天")
+            Quad(DarkUrgentRedBg, DarkUrgentRed, DarkUrgentRedBorder, "已过期 ${-days}天")
         } else {
             Quad(UrgentRedBg, UrgentRed, UrgentRedBorder, "已过期 ${-days}天")
         }
         FoodStatus.EXPIRING_TODAY -> if (isDark) {
-            Quad(UrgentRed.copy(alpha = 0.16f), UrgentRed, UrgentRed.copy(alpha = 0.35f), "今天到期 ⚠️")
+            Quad(DarkUrgentRedBg, DarkUrgentRed, DarkUrgentRedBorder, "今天到期 ⚠️")
         } else {
             Quad(UrgentRedBg, UrgentRed, UrgentRedBorder, "今天到期 ⚠️")
         }
         FoodStatus.URGENT -> if (isDark) {
-            Quad(UrgentRed.copy(alpha = 0.16f), UrgentRed, UrgentRed.copy(alpha = 0.35f), "还剩 ${days}天")
+            Quad(DarkUrgentRedBg, DarkUrgentRed, DarkUrgentRedBorder, "还剩 ${days}天")
         } else {
             Quad(UrgentRedBg, UrgentRed, UrgentRedBorder, "还剩 ${days}天")
         }
         FoodStatus.WARNING -> if (isDark) {
-            Quad(WarningAmber.copy(alpha = 0.16f), WarningAmber, WarningAmber.copy(alpha = 0.35f), "还剩 ${days}天")
+            Quad(DarkWarningAmberBg, DarkWarningAmber, DarkWarningAmberBorder, "还剩 ${days}天")
         } else {
             Quad(WarningAmberBg, WarningAmber, WarningAmberBorder, "还剩 ${days}天")
         }
         FoodStatus.FRESH -> if (isDark) {
-            Quad(SafeGreen.copy(alpha = 0.16f), SafeGreen, SafeGreen.copy(alpha = 0.35f), "还剩 ${days}天")
+            Quad(DarkFrostPrimaryContainer, DarkFrostPrimary, DarkFrostPrimaryLight, "还剩 ${days}天")
         } else {
             Quad(SafeGreenBg, SafeGreen, SafeGreenBorder, "还剩 ${days}天")
         }
@@ -108,9 +108,9 @@ private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, v
 fun FoodLocationTag(location: String) {
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val (bg, fg) = when {
-        location.contains("冷藏") -> if (isDark) Pair(FridgeBlue.copy(alpha = 0.16f), Color(0xFF38BDF8)) else Pair(FridgeBlueBg, FridgeBlue)
-        location.contains("冷冻") -> if (isDark) Pair(FreezerIndigo.copy(alpha = 0.16f), Color(0xFF818CF8)) else Pair(FreezerIndigoBg, FreezerIndigo)
-        else -> if (isDark) Pair(PantryWarm.copy(alpha = 0.16f), Color(0xFFFBBF24)) else Pair(PantryWarmBg, PantryWarm)
+        location.contains("冷藏") -> if (isDark) Pair(DarkFridgeBlue.copy(alpha = 0.16f), DarkFridgeBlue) else Pair(FridgeBlueBg, FridgeBlue)
+        location.contains("冷冻") -> if (isDark) Pair(DarkFreezerIndigo.copy(alpha = 0.16f), DarkFreezerIndigo) else Pair(FreezerIndigoBg, FreezerIndigo)
+        else -> if (isDark) Pair(DarkPantryWarm.copy(alpha = 0.16f), DarkPantryWarm) else Pair(PantryWarmBg, PantryWarm)
     }
 
     Box(
@@ -137,12 +137,13 @@ fun FreshnessProgressBar(
     status: FoodStatus,
     modifier: Modifier = Modifier
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val barColor = when (status) {
-        FoodStatus.EXPIRED -> UrgentRed
-        FoodStatus.EXPIRING_TODAY, FoodStatus.URGENT -> UrgentRed
-        FoodStatus.WARNING -> WarningAmber
-        FoodStatus.FRESH -> SafeGreen
-        FoodStatus.CONSUMED -> Color(0xFF94A3B8)
+        FoodStatus.EXPIRED -> if (isDark) DarkUrgentRed else UrgentRed
+        FoodStatus.EXPIRING_TODAY, FoodStatus.URGENT -> if (isDark) DarkUrgentRed else UrgentRed
+        FoodStatus.WARNING -> if (isDark) DarkWarningAmber else WarningAmber
+        FoodStatus.FRESH -> if (isDark) DarkFrostPrimary else SafeGreen
+        FoodStatus.CONSUMED -> if (isDark) Color(0xFF5E6575) else Color(0xFF94A3B8)
     }
 
     val animatedProgress by animateFloatAsState(targetValue = progress, label = "freshness")
@@ -201,6 +202,7 @@ fun FoodItemCard(
     onSelectToggle: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val status = food.getStatus()
     val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
     val expiryDateStr = dateFormat.format(Date(food.expiryDateMs))
@@ -211,7 +213,7 @@ fun FoodItemCard(
         else MaterialTheme.colorScheme.surface,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            if (isSelected) FreshGreenPrimary else MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+            if (isSelected) (if (isDark) DarkFrostPrimary else FreshGreenPrimary) else MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
         ),
         modifier = modifier
             .fillMaxWidth()
@@ -233,7 +235,7 @@ fun FoodItemCard(
                         checked = isSelected,
                         onCheckedChange = { onSelectToggle() },
                         colors = CheckboxDefaults.colors(
-                            checkedColor = FreshGreenPrimary,
+                            checkedColor = if (isDark) DarkFrostPrimary else FreshGreenPrimary,
                             uncheckedColor = MaterialTheme.colorScheme.outline
                         )
                     )
@@ -245,7 +247,7 @@ fun FoodItemCard(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(FreshGreenLight.copy(alpha = 0.6f)),
+                        .background(if (isDark) DarkFrostPrimaryContainer else FreshGreenLight.copy(alpha = 0.6f)),
                     contentAlignment = Alignment.Center
                 ) {
                     if (!food.imageUri.isNullOrBlank()) {
@@ -352,7 +354,7 @@ fun FoodItemCard(
                         Icon(
                             imageVector = Icons.Outlined.DeleteOutline,
                             contentDescription = "移入回收站",
-                            tint = UrgentRed.copy(alpha = 0.8f),
+                            tint = (if (isDark) DarkUrgentRed else UrgentRed).copy(alpha = 0.8f),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -364,8 +366,8 @@ fun FoodItemCard(
                             shape = RoundedCornerShape(10.dp),
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                             colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = FreshGreenContainer,
-                                contentColor = FreshGreenDark
+                                containerColor = if (isDark) DarkFrostPrimaryContainer else FreshGreenContainer,
+                                contentColor = if (isDark) DarkFrostPrimary else FreshGreenDark
                             ),
                             modifier = Modifier.height(28.dp)
                         ) {
@@ -381,7 +383,7 @@ fun FoodItemCard(
                         Text(
                             text = "已享受 ✨",
                             fontSize = 11.sp,
-                            color = SafeGreen,
+                            color = if (isDark) DarkFrostPrimary else SafeGreen,
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -422,12 +424,12 @@ fun FridgeHealthOverviewCard(
 
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val scoreBg = if (isDark) {
-        if (healthScore >= 80) SafeGreen.copy(alpha = 0.16f) else UrgentRed.copy(alpha = 0.16f)
+        if (healthScore >= 80) DarkFrostPrimaryContainer else DarkUrgentRedBg
     } else {
         if (healthScore >= 80) SafeGreenBg else UrgentRedBg
     }
     val scoreBorder = if (isDark) {
-        if (healthScore >= 80) SafeGreen.copy(alpha = 0.35f) else UrgentRed.copy(alpha = 0.35f)
+        if (healthScore >= 80) DarkFrostPrimaryLight else DarkUrgentRedBorder
     } else {
         if (healthScore >= 80) SafeGreenBorder else UrgentRedBorder
     }
@@ -476,7 +478,7 @@ fun FridgeHealthOverviewCard(
                         text = "$healthScore 分",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = if (healthScore >= 80) SafeGreen else UrgentRed
+                        color = if (healthScore >= 80) (if (isDark) DarkFrostPrimary else SafeGreen) else (if (isDark) DarkUrgentRed else UrgentRed)
                     )
                 }
             }
@@ -492,8 +494,8 @@ fun FridgeHealthOverviewCard(
                     count = activeCount,
                     label = "储藏中",
                     emoji = "🥬",
-                    color = SafeGreen,
-                    bgColor = SafeGreenBg,
+                    color = if (isDark) DarkFrostPrimary else SafeGreen,
+                    bgColor = if (isDark) DarkFrostPrimaryContainer else SafeGreenBg,
                     onClick = onActiveClick,
                     modifier = Modifier.weight(1f)
                 )
@@ -501,8 +503,8 @@ fun FridgeHealthOverviewCard(
                     count = urgentCount,
                     label = "临期待吃",
                     emoji = "🔥",
-                    color = WarmOrange,
-                    bgColor = WarmOrangeLight,
+                    color = if (isDark) DarkWarningAmber else WarmOrange,
+                    bgColor = if (isDark) DarkWarningAmberBg else WarmOrangeLight,
                     onClick = onUrgentClick,
                     modifier = Modifier.weight(1f)
                 )
@@ -510,8 +512,8 @@ fun FridgeHealthOverviewCard(
                     count = expiredCount,
                     label = "已过期",
                     emoji = "⚠️",
-                    color = UrgentRed,
-                    bgColor = UrgentRedBg,
+                    color = if (isDark) DarkUrgentRed else UrgentRed,
+                    bgColor = if (isDark) DarkUrgentRedBg else UrgentRedBg,
                     onClick = onExpiredClick,
                     modifier = Modifier.weight(1f)
                 )
@@ -519,7 +521,7 @@ fun FridgeHealthOverviewCard(
                     count = trashCount,
                     label = "回收站",
                     emoji = "🗑️",
-                    color = Color(0xFF64748B),
+                    color = if (isDark) DarkTextSecondary else Color(0xFF64748B),
                     bgColor = MaterialTheme.colorScheme.surfaceVariant,
                     onClick = onTrashClick,
                     modifier = Modifier.weight(1f)
@@ -612,8 +614,8 @@ fun AppBottomNavBar(
         if (isDark) {
             Brush.verticalGradient(
                 colors = listOf(
-                    Color(0xFF26334D).copy(alpha = 0.72f),
-                    Color(0xFF141C2B).copy(alpha = 0.88f)
+                    Color(0xFF181B22).copy(alpha = 0.88f),
+                    Color(0xFF0D0E12).copy(alpha = 0.94f)
                 )
             )
         } else {
@@ -631,9 +633,9 @@ fun AppBottomNavBar(
         if (isDark) {
             Brush.verticalGradient(
                 colors = listOf(
-                    Color.White.copy(alpha = 0.40f),
-                    Color.White.copy(alpha = 0.08f),
-                    Color.White.copy(alpha = 0.18f)
+                    Color.White.copy(alpha = 0.28f),
+                    Color.White.copy(alpha = 0.06f),
+                    Color.White.copy(alpha = 0.16f)
                 )
             )
         } else {
@@ -680,7 +682,7 @@ fun AppBottomNavBar(
                 .size(width = indicatorWidthDp, height = indicatorHeightDp)
                 .clip(CircleShape)
                 .background(
-                    if (isDark) FreshGreenPrimary.copy(alpha = 0.22f)
+                    if (isDark) DarkFrostPrimary.copy(alpha = 0.20f)
                     else FreshGreenPrimary.copy(alpha = 0.16f)
                 )
                 .border(
@@ -688,7 +690,7 @@ fun AppBottomNavBar(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             if (isDark) Color.White.copy(alpha = 0.35f) else Color.White.copy(alpha = 0.85f),
-                            FreshGreenPrimary.copy(alpha = 0.25f)
+                            if (isDark) DarkFrostPrimary.copy(alpha = 0.30f) else FreshGreenPrimary.copy(alpha = 0.25f)
                         )
                     ),
                     shape = CircleShape
@@ -701,8 +703,8 @@ fun AppBottomNavBar(
         ) {
             tabs.forEachIndexed { index, (route, icon, label) ->
                 val selected = selectedIndex == index
-                val activeColor = FreshGreenPrimary
-                val inactiveColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                val activeColor = if (isDark) DarkFrostPrimary else FreshGreenPrimary
+                val inactiveColor = if (isDark) DarkTextSecondary else Color(0xFF64748B)
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -765,25 +767,33 @@ fun FreshKeeperFAB(
             .shadow(
                 elevation = 12.dp,
                 shape = RoundedCornerShape(20.dp),
-                ambientColor = if (isDark) Color.Black.copy(alpha = 0.5f) else Color(0x3010B981),
-                spotColor = FreshGreenPrimary.copy(alpha = 0.55f)
+                ambientColor = if (isDark) Color.Black.copy(alpha = 0.65f) else Color(0x3010B981),
+                spotColor = if (isDark) DarkFrostPrimary.copy(alpha = 0.55f) else FreshGreenPrimary.copy(alpha = 0.55f)
             )
             .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.linearGradient(
-                    colors = listOf(
-                        Color(0xFF34D399), // 顶部淡透薄荷亮绿
-                        FreshGreenPrimary, // 经典翠绿
-                        Color(0xFF047857)  // 底部深邃墨绿
-                    )
+                    colors = if (isDark) {
+                        listOf(
+                            Color(0xFF00FFAC), // 方案二：霜晶极夜 冰霜荧光亮绿
+                            DarkFrostPrimary,   // 冰萃核心绿
+                            Color(0xFF007A50)   // 深冷萃基底
+                        )
+                    } else {
+                        listOf(
+                            Color(0xFF34D399), // 顶部淡透薄荷亮绿
+                            FreshGreenPrimary, // 经典翠绿
+                            Color(0xFF047857)  // 底部深邃墨绿
+                        )
+                    }
                 )
             )
             .border(
                 width = 1.2.dp,
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = 0.70f), // 顶部玻璃镜面反光
-                        Color.White.copy(alpha = 0.15f)  // 侧边与下沿微光
+                        Color.White.copy(alpha = if (isDark) 0.85f else 0.70f), // 顶部玻璃镜面反光
+                        Color.White.copy(alpha = if (isDark) 0.20f else 0.15f)  // 侧边与下沿微光
                     )
                 ),
                 shape = RoundedCornerShape(20.dp)
@@ -911,7 +921,7 @@ fun EmptyFoodState(
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onAddClick,
-                colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                colors = ButtonDefaults.buttonColors(containerColor = if (androidx.compose.foundation.isSystemInDarkTheme()) DarkFrostPrimary else FreshGreenPrimary),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -931,6 +941,8 @@ fun ConsumeQuantityDialog(
     onDismiss: () -> Unit,
     onConfirm: (consumeCount: Int) -> Unit
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val primaryColor = if (isDark) DarkFrostPrimary else FreshGreenPrimary
     val parsed = remember(food.quantity) { QuantityHelper.parse(food.quantity) }
     val maxCount = (parsed.count ?: 1).coerceAtLeast(1)
     val unit = parsed.unit
@@ -943,7 +955,7 @@ fun ConsumeQuantityDialog(
                 modifier = Modifier
                     .size(54.dp)
                     .clip(CircleShape)
-                    .background(FreshGreenLight),
+                    .background(if (isDark) DarkFrostPrimaryContainer else FreshGreenLight),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = food.iconEmoji.ifBlank { "🍽️" }, fontSize = 28.sp)
@@ -1012,7 +1024,7 @@ fun ConsumeQuantityDialog(
                                 text = "$countToConsume $unit",
                                 fontSize = 26.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = FreshGreenPrimary
+                                color = primaryColor
                             )
 
                             Spacer(modifier = Modifier.width(20.dp))
@@ -1034,7 +1046,7 @@ fun ConsumeQuantityDialog(
                         Text(
                             text = if (remain > 0) "消灭后还剩 $remain $unit 留存" else "消灭后将全部吃完（标记为已食用）",
                             fontSize = 12.sp,
-                            color = if (remain > 0) MaterialTheme.colorScheme.onSurfaceVariant else FreshGreenPrimary,
+                            color = if (remain > 0) MaterialTheme.colorScheme.onSurfaceVariant else primaryColor,
                             fontWeight = if (remain == 0) FontWeight.Bold else FontWeight.Normal
                         )
                     }
@@ -1073,7 +1085,7 @@ fun ConsumeQuantityDialog(
         confirmButton = {
             Button(
                 onClick = { onConfirm(countToConsume) },
-                colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(

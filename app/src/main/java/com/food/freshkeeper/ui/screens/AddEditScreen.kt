@@ -68,6 +68,10 @@ fun AddEditScreen(
     val coroutineScope = rememberCoroutineScope()
     val isEditMode = foodId != null && foodId > 0
 
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val primaryColor = if (isDark) DarkFrostPrimary else FreshGreenPrimary
+    val urgentColor = if (isDark) DarkUrgentRed else UrgentRed
+
     // 编辑已有食品时加载原数据
     val existingFood by if (isEditMode) {
         viewModel.getFoodById(foodId!!).collectAsState(initial = null)
@@ -292,7 +296,7 @@ fun AddEditScreen(
                             }
                         },
                         enabled = name.isNotBlank(),
-                        colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                     ) {
@@ -379,7 +383,7 @@ fun AddEditScreen(
                         if (imageUriString != null) {
                             TextButton(
                                 onClick = { imageUriString = null },
-                                colors = ButtonDefaults.textButtonColors(contentColor = UrgentRed)
+                                colors = ButtonDefaults.textButtonColors(contentColor = urgentColor)
                             ) {
                                 Text("移除照片", fontSize = 12.sp)
                             }
@@ -396,7 +400,7 @@ fun AddEditScreen(
                             modifier = Modifier
                                 .size(64.dp)
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(FreshGreenLight.copy(alpha = 0.6f))
+                                .background(if (isDark) DarkFrostPrimaryContainer else FreshGreenLight.copy(alpha = 0.6f))
                                 .clickable { showPhotoSourceSheet = true },
                             contentAlignment = Alignment.Center
                         ) {
@@ -409,9 +413,9 @@ fun AddEditScreen(
                                 )
                             } else {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = "上传照片", tint = FreshGreenDark, modifier = Modifier.size(24.dp))
+                                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = "上传照片", tint = if (isDark) DarkFrostPrimary else FreshGreenDark, modifier = Modifier.size(24.dp))
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    Text("上传照片", fontSize = 10.sp, color = FreshGreenDark, fontWeight = FontWeight.Medium)
+                                    Text("上传照片", fontSize = 10.sp, color = if (isDark) DarkFrostPrimary else FreshGreenDark, fontWeight = FontWeight.Medium)
                                 }
                             }
                         }
@@ -459,10 +463,10 @@ fun AddEditScreen(
                                     .size(36.dp)
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(
-                                        if (isSelected) FreshGreenContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                        if (isSelected) (if (isDark) DarkFrostPrimaryContainer else FreshGreenContainer) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                     )
                                     .then(
-                                        if (isSelected) Modifier.border(1.dp, FreshGreenPrimary, RoundedCornerShape(10.dp))
+                                        if (isSelected) Modifier.border(1.dp, primaryColor, RoundedCornerShape(10.dp))
                                         else Modifier
                                     )
                                     .clickable { iconEmoji = emoji },
@@ -708,8 +712,8 @@ fun AddEditScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(UrgentRedBg)
-                            .border(0.8.dp, UrgentRedBorder, RoundedCornerShape(12.dp))
+                            .background(if (isDark) DarkUrgentRedBg else UrgentRedBg)
+                            .border(0.8.dp, if (isDark) DarkUrgentRedBorder else UrgentRedBorder, RoundedCornerShape(12.dp))
                             .padding(12.dp)
                     ) {
                         Row(
@@ -718,15 +722,15 @@ fun AddEditScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text("预计到期时间 (共 $calculatedTotalDays 天)", fontSize = 11.sp, color = UrgentRed)
+                                Text("预计到期时间 (共 $calculatedTotalDays 天)", fontSize = 11.sp, color = urgentColor)
                                 Text(
                                     text = expiryDateStr,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = UrgentRed
+                                    color = urgentColor
                                 )
                             }
-                            Text("⏳ 实时计算", fontSize = 11.sp, color = UrgentRed)
+                            Text("⏳ 实时计算", fontSize = 11.sp, color = urgentColor)
                         }
                     }
                 }
@@ -766,7 +770,7 @@ fun AddEditScreen(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                                focusedBorderColor = FreshGreenPrimary,
+                                focusedBorderColor = primaryColor,
                                 unfocusedBorderColor = Color.Transparent
                             )
                         )
@@ -776,7 +780,7 @@ fun AddEditScreen(
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
                                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                border = BorderStroke(1.dp, if (quantityUnitMenuExpanded) FreshGreenPrimary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                                border = BorderStroke(1.dp, if (quantityUnitMenuExpanded) primaryColor else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(56.dp)
@@ -798,7 +802,7 @@ fun AddEditScreen(
                                     Icon(
                                         imageVector = Icons.Default.ArrowDropDown,
                                         contentDescription = "选择单位",
-                                        tint = FreshGreenPrimary
+                                        tint = primaryColor
                                     )
                                 }
                             }
@@ -830,13 +834,13 @@ fun AddEditScreen(
                                                     text = unitItem,
                                                     fontSize = 14.sp,
                                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (isSelected) FreshGreenPrimary else MaterialTheme.colorScheme.onSurface
+                                                    color = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface
                                                 )
                                                 if (isSelected) {
                                                     Icon(
                                                         imageVector = Icons.Default.Check,
                                                         contentDescription = null,
-                                                        tint = FreshGreenPrimary,
+                                                        tint = primaryColor,
                                                         modifier = Modifier.size(16.dp)
                                                     )
                                                 }
@@ -866,7 +870,7 @@ fun AddEditScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surface,
                             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                            focusedBorderColor = FreshGreenPrimary,
+                            focusedBorderColor = primaryColor,
                             unfocusedBorderColor = Color.Transparent
                         )
                     )
@@ -898,7 +902,7 @@ fun AddEditScreen(
                 ) {
                     Text(
                         text = "放弃录入",
-                        color = UrgentRed,
+                        color = urgentColor,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -909,7 +913,7 @@ fun AddEditScreen(
                 ) {
                     Text(
                         text = "继续填写",
-                        color = FreshGreenPrimary,
+                        color = primaryColor,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -949,7 +953,7 @@ fun AddEditScreen(
                         modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = null, tint = FreshGreenPrimary, modifier = Modifier.size(22.dp))
+                        Icon(Icons.Default.CameraAlt, contentDescription = null, tint = primaryColor, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {
                             Text("拍照", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
@@ -972,7 +976,7 @@ fun AddEditScreen(
                         modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = FreshGreenPrimary, modifier = Modifier.size(22.dp))
+                        Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = primaryColor, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {
                             Text("从相册选择", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
@@ -996,10 +1000,10 @@ fun AddEditScreen(
                             modifier = Modifier.padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = UrgentRed, modifier = Modifier.size(22.dp))
+                            Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = urgentColor, modifier = Modifier.size(22.dp))
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
-                                Text("移除当前照片", color = UrgentRed, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                Text("移除当前照片", color = urgentColor, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                                 Text("清空已选择的照片并使用 Emoji 图标", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }

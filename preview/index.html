@@ -3,9 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>鲜食记 · 现代扁平化 UI 预览</title>
+  <title>鲜食记 · 深色模式重做方案对比与体验中心</title>
   <style>
-    :root {
+    /* ============================================================
+       1. 全局设计规范与多方案色彩变量 (CSS Custom Properties)
+       ============================================================ */
+    :root, [data-theme="light"] {
+      --theme-id: "light";
+      --theme-name: "原版浅色 · Light Minimal";
       --primary: #10B981;
       --primary-dark: #047857;
       --primary-light: #D1FAE5;
@@ -31,6 +36,127 @@
       --pantry-warm: #D97706;
       --pantry-bg: #FFFBEB;
       --pantry-border: #FEF3C7;
+      --dock-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(240, 244, 248, 0.72) 100%);
+      --dock-border: rgba(255, 255, 255, 0.65);
+      --dock-rim: rgba(255, 255, 255, 0.95);
+      --dock-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.12);
+      --fab-bg: linear-gradient(135deg, #34D399 0%, #10B981 50%, #047857 100%);
+      --fab-shadow: 0 12px 28px -4px rgba(16, 185, 129, 0.5);
+      --device-border: #1E293B;
+    }
+
+    /* 方案一：🌲「森苔暗涌」Emerald Moss (自然生机 · 沉浸深苔墨玉) */
+    [data-theme="dark-1"] {
+      --theme-id: "dark-1";
+      --theme-name: "🌲 方案一：森苔暗涌 (Emerald Moss)";
+      --bg: #090E0B;
+      --surface: #121A15;
+      --surface-variant: #18241D;
+      --border: #21362A;
+      --text-main: #ECFDF5;
+      --text-muted: #7FA78E;
+      --primary: #10B981;
+      --primary-dark: #34D399;
+      --primary-light: rgba(52, 211, 153, 0.25);
+      --primary-container: rgba(16, 185, 129, 0.18);
+      --urgent-red: #FB7185;
+      --urgent-bg: rgba(251, 113, 133, 0.15);
+      --urgent-border: rgba(251, 113, 133, 0.32);
+      --warn-amber: #FBBF24;
+      --warn-bg: rgba(251, 191, 36, 0.15);
+      --warn-border: rgba(251, 191, 36, 0.32);
+      --fridge-blue: #38BDF8;
+      --fridge-bg: rgba(56, 189, 248, 0.13);
+      --fridge-border: rgba(56, 189, 248, 0.28);
+      --freezer-indigo: #818CF8;
+      --freezer-bg: rgba(129, 140, 248, 0.13);
+      --freezer-border: rgba(129, 140, 248, 0.28);
+      --pantry-warm: #FB923C;
+      --pantry-bg: rgba(251, 146, 60, 0.13);
+      --pantry-border: rgba(251, 146, 60, 0.28);
+      --dock-bg: linear-gradient(180deg, rgba(18, 28, 22, 0.88) 0%, rgba(10, 16, 13, 0.84) 100%);
+      --dock-border: rgba(52, 211, 153, 0.26);
+      --dock-rim: rgba(52, 211, 153, 0.4);
+      --dock-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.7);
+      --fab-bg: linear-gradient(135deg, #34D399 0%, #10B981 60%, #065F46 100%);
+      --fab-shadow: 0 12px 28px -4px rgba(16, 185, 129, 0.55);
+      --device-border: #14221A;
+    }
+
+    /* 方案二：❄️「霜晶极夜」Frost Obsidian (现代纯净冷萃 · OLED纯黑与冰霜冷冽) */
+    [data-theme="dark-2"] {
+      --theme-id: "dark-2";
+      --theme-name: "❄️ 方案二：霜晶极夜 (Frost Obsidian)";
+      --bg: #07080A;
+      --surface: #111317;
+      --surface-variant: #181B22;
+      --border: rgba(255, 255, 255, 0.08);
+      --text-main: #FFFFFF;
+      --text-muted: #858D9E;
+      --primary: #00E599;
+      --primary-dark: #00E599;
+      --primary-light: rgba(0, 229, 153, 0.25);
+      --primary-container: rgba(0, 229, 153, 0.14);
+      --urgent-red: #FF4D6D;
+      --urgent-bg: rgba(255, 77, 109, 0.15);
+      --urgent-border: rgba(255, 77, 109, 0.28);
+      --warn-amber: #FFB703;
+      --warn-bg: rgba(255, 183, 3, 0.15);
+      --warn-border: rgba(255, 183, 3, 0.28);
+      --fridge-blue: #00B4D8;
+      --fridge-bg: rgba(0, 180, 216, 0.13);
+      --fridge-border: rgba(0, 180, 216, 0.26);
+      --freezer-indigo: #6366F1;
+      --freezer-bg: rgba(99, 102, 241, 0.13);
+      --freezer-border: rgba(99, 102, 241, 0.26);
+      --pantry-warm: #F59E0B;
+      --pantry-bg: rgba(245, 158, 11, 0.13);
+      --pantry-border: rgba(245, 158, 11, 0.26);
+      --dock-bg: linear-gradient(180deg, rgba(20, 23, 30, 0.88) 0%, rgba(10, 11, 15, 0.84) 100%);
+      --dock-border: rgba(255, 255, 255, 0.12);
+      --dock-rim: rgba(255, 255, 255, 0.32);
+      --dock-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.85);
+      --fab-bg: linear-gradient(135deg, #00FFAC 0%, #00E599 60%, #00875A 100%);
+      --fab-shadow: 0 12px 28px -4px rgba(0, 229, 153, 0.55);
+      --device-border: #141720;
+    }
+
+    /* 方案三：☕「暖夜食肆」Midnight Bistro (温暖厨房 · 深焙暖褐微醺护眼) */
+    [data-theme="dark-3"] {
+      --theme-id: "dark-3";
+      --theme-name: "☕ 方案三：暖夜食肆 (Midnight Bistro)";
+      --bg: #0D0B09;
+      --surface: #181512;
+      --surface-variant: #231E19;
+      --border: #2E2720;
+      --text-main: #F7F2EB;
+      --text-muted: #A39686;
+      --primary: #22C55E;
+      --primary-dark: #4ADE80;
+      --primary-light: rgba(34, 197, 94, 0.25);
+      --primary-container: rgba(34, 197, 94, 0.16);
+      --urgent-red: #F43F5E;
+      --urgent-bg: rgba(244, 63, 94, 0.15);
+      --urgent-border: rgba(244, 63, 94, 0.28);
+      --warn-amber: #F59E0B;
+      --warn-bg: rgba(245, 158, 11, 0.15);
+      --warn-border: rgba(245, 158, 11, 0.28);
+      --fridge-blue: #0EA5E9;
+      --fridge-bg: rgba(14, 165, 233, 0.13);
+      --fridge-border: rgba(14, 165, 233, 0.26);
+      --freezer-indigo: #8B5CF6;
+      --freezer-bg: rgba(139, 92, 246, 0.13);
+      --freezer-border: rgba(139, 92, 246, 0.26);
+      --pantry-warm: #EA580C;
+      --pantry-bg: rgba(234, 88, 12, 0.13);
+      --pantry-border: rgba(234, 88, 12, 0.26);
+      --dock-bg: linear-gradient(180deg, rgba(28, 23, 18, 0.88) 0%, rgba(16, 13, 10, 0.84) 100%);
+      --dock-border: rgba(245, 158, 11, 0.25);
+      --dock-rim: rgba(245, 158, 11, 0.35);
+      --dock-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.75);
+      --fab-bg: linear-gradient(135deg, #4ADE80 0%, #22C55E 60%, #15803D 100%);
+      --fab-shadow: 0 12px 28px -4px rgba(34, 197, 94, 0.5);
+      --device-border: #231C16;
     }
 
     * {
@@ -42,46 +168,186 @@
     }
 
     body {
-      background: #0F172A;
+      background: #0B0E14;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      padding: 24px 16px 60px;
+      color: #F8FAFC;
+      transition: background 0.3s ease;
+    }
+
+    /* 顶部控制总览面板 */
+    .top-bar-panel {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .main-title-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 6px 18px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #34D399;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    }
+
+    /* 方案切换胶囊按钮组 */
+    .theme-selector-bar {
+      display: flex;
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 5px;
+      border-radius: 40px;
+      gap: 4px;
+      flex-wrap: wrap;
       justify-content: center;
-      padding: 20px;
+      box-shadow: 0 10px 30px -5px rgba(0,0,0,0.5);
+    }
+
+    .theme-tab-btn {
+      background: transparent;
+      border: none;
+      color: #94A3B8;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .theme-tab-btn:hover {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .theme-tab-btn.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    /* 视图模式切换（单机 vs 3机并排对比） */
+    .view-mode-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12.5px;
+      color: #94A3B8;
+    }
+
+    .mode-toggle-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #E2E8F0;
+      padding: 5px 14px;
+      border-radius: 18px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .mode-toggle-btn:hover, .mode-toggle-btn.active {
+      background: #3B82F6;
+      border-color: #60A5FA;
+      color: white;
+    }
+
+    /* 预览画布容器 */
+    .canvas-wrapper {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      transition: all 0.35s ease;
+      flex-wrap: wrap;
+    }
+
+    /* 单机容器 */
+    .device-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .scheme-badge-header {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+    }
+    .canvas-wrapper.side-by-side .scheme-badge-header {
+      display: flex;
+    }
+
+    .scheme-pill-title {
+      font-size: 14px;
+      font-weight: 800;
+      padding: 4px 14px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: #F8FAFC;
     }
 
-    .top-controls {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: center;
+    .scheme-pill-desc {
+      font-size: 11px;
+      color: #94A3B8;
     }
 
-    .preview-badge {
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      color: #34D399;
-      padding: 6px 14px;
+    .choose-scheme-btn {
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: white;
+      border: none;
+      padding: 6px 16px;
       border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .choose-scheme-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
     }
 
+    /* 模拟手机机身 */
     .device-mockup {
-      width: 390px;
-      height: 820px;
+      width: 380px;
+      height: 790px;
       background: var(--bg);
-      border-radius: 46px;
-      border: 10px solid #1E293B;
-      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.1);
+      border-radius: 44px;
+      border: 10px solid var(--device-border);
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08);
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      transition: background 0.3s ease, border-color 0.3s ease;
     }
 
     /* 顶部状态栏 */
@@ -91,7 +357,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       color: var(--text-main);
       z-index: 50;
@@ -101,7 +367,7 @@
     .screen-container {
       flex: 1;
       overflow-y: auto;
-      padding: 12px 16px 90px;
+      padding: 10px 15px 90px;
       position: relative;
       display: none;
     }
@@ -121,14 +387,14 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 18px;
-      padding: 16px;
-      margin-bottom: 14px;
-      transition: all 0.2s ease;
+      padding: 14px;
+      margin-bottom: 12px;
+      transition: background 0.25s ease, border-color 0.25s ease;
     }
 
     /* 标题与字阶 */
     .greeting-title {
-      font-size: 22px;
+      font-size: 21px;
       font-weight: 800;
       color: var(--text-main);
       letter-spacing: -0.3px;
@@ -137,7 +403,7 @@
     .greeting-sub {
       font-size: 12px;
       color: var(--text-muted);
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
     /* 冰箱新鲜指数 */
@@ -155,7 +421,7 @@
       background: var(--primary-container);
       border: 1px solid var(--primary-light);
       color: var(--primary-dark);
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 800;
       padding: 4px 12px;
       border-radius: 12px;
@@ -215,13 +481,14 @@
     .horizontal-scroll::-webkit-scrollbar { display: none; }
 
     .urgent-card {
-      min-width: 190px;
+      min-width: 185px;
       background: var(--surface);
       border: 1px solid var(--urgent-border);
       border-radius: 16px;
       padding: 12px;
       flex-shrink: 0;
       cursor: pointer;
+      transition: border-color 0.2s;
     }
 
     /* 储藏分区 */
@@ -229,7 +496,7 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .space-card {
       padding: 12px 6px;
@@ -256,8 +523,7 @@
       transition: all 0.2s;
       cursor: pointer;
     }
-    .food-card:hover { border-color: rgba(16, 185, 129, 0.4); }
-    .food-card.consumed { opacity: 0.6; background: #F8FAFC; }
+    .food-card:hover { border-color: rgba(16, 185, 129, 0.45); }
 
     .food-card-top {
       display: flex;
@@ -265,8 +531,8 @@
       gap: 12px;
     }
     .food-icon-box {
-      width: 48px;
-      height: 48px;
+      width: 46px;
+      height: 46px;
       border-radius: 14px;
       background: var(--primary-container);
       display: flex;
@@ -346,9 +612,9 @@
       display: flex;
       align-items: center;
       gap: 3px;
-      transition: background 0.15s;
+      transition: all 0.15s;
     }
-    .action-btn-consume:hover { background: #A7F3D0; }
+    .action-btn-consume:hover { opacity: 0.85; transform: scale(1.02); }
 
     /* 悬浮微岛底部导航栏 (流光液态玻璃风格) */
     .dock-nav-bar {
@@ -358,18 +624,19 @@
       transform: translateX(-50%);
       width: max-content;
       max-width: 90%;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(240, 244, 248, 0.68) 100%);
+      background: var(--dock-bg);
       backdrop-filter: blur(28px) saturate(190%);
       -webkit-backdrop-filter: blur(28px) saturate(190%);
-      border: 1px solid rgba(255, 255, 255, 0.6);
+      border: 1px solid var(--dock-border);
       border-radius: 40px;
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 2px;
-      padding: 7px 12px;
-      box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.9);
+      padding: 6px 10px;
+      box-shadow: var(--dock-shadow), inset 0 1px 1.5px var(--dock-rim);
       z-index: 100;
+      transition: all 0.3s ease;
     }
     .nav-item {
       display: flex;
@@ -377,62 +644,61 @@
       align-items: center;
       justify-content: center;
       gap: 3px;
-      width: 68px;
-      padding: 3px 4px;
+      width: 66px;
+      padding: 3px 2px;
       border-radius: 20px;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.2s ease;
     }
     .nav-icon-box {
-      width: 56px;
-      height: 32px;
-      border-radius: 16px;
+      width: 52px;
+      height: 30px;
+      border-radius: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      font-size: 17px;
+      transition: all 0.25s ease;
     }
     .nav-item.active {
       color: var(--primary);
       font-weight: 800;
     }
     .nav-item.active .nav-icon-box {
-      background: rgba(16, 185, 129, 0.18);
-      border: 1px solid rgba(16, 185, 129, 0.28);
-      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.18);
+      background: var(--primary-container);
+      border: 1px solid var(--primary-light);
+      box-shadow: 0 2px 8px var(--primary-container);
     }
 
     /* FAB悬浮加号 (液态微光晶透按钮) */
     .fab-btn {
       position: absolute;
-      bottom: 88px;
-      right: 18px;
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #047857 100%);
+      bottom: 84px;
+      right: 16px;
+      width: 54px;
+      height: 54px;
+      background: var(--fab-bg);
       color: white;
-      border-radius: 20px;
+      border-radius: 19px;
       border: 1.2px solid rgba(255, 255, 255, 0.65);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 26px;
       font-weight: 300;
-      box-shadow: 0 12px 28px -4px rgba(16, 185, 129, 0.5), inset 0 1px 1.5px rgba(255, 255, 255, 0.85);
+      box-shadow: var(--fab-shadow), inset 0 1px 1.5px rgba(255, 255, 255, 0.85);
       cursor: pointer;
       z-index: 90;
       transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .fab-btn:hover {
       transform: scale(1.08) translateY(-2px);
-      box-shadow: 0 16px 32px -4px rgba(16, 185, 129, 0.6), inset 0 1px 1.5px rgba(255, 255, 255, 0.95);
     }
 
-    /* 详情弹窗模拟 */
+    /* 食材档案详情浮层 (包含 V1.8.0 快捷就地消灭行) */
     .detail-overlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -448,361 +714,827 @@
       from { transform: translateY(100%); }
       to { transform: translateY(0); }
     }
+
+    /* 快捷消灭行 (DetailScreen V1.8.0) */
+    .shortcut-consume-row {
+      background: var(--primary-container);
+      border: 1px solid var(--primary-light);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .stepper-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stepper-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: none;
+      background: var(--surface);
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .stepper-val {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-main);
+      min-width: 32px;
+      text-align: center;
+    }
+    .btn-consume-action {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* 多件消灭弹窗模拟 (HomeScreen / ListScreen 点击卡片消灭触发) */
+    .dialog-backdrop {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .dialog-backdrop.active { display: flex; }
+    .dialog-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 320px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* 底部设计参数面板 */
+    .specs-panel {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(20, 26, 38, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 20px;
+      margin-top: 30px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    }
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .swatch-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .swatch-color-box {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      flex-shrink: 0;
+    }
+    .swatch-meta {
+      font-size: 11px;
+    }
+    .swatch-name { font-weight: 700; color: #F1F5F9; }
+    .swatch-hex { color: #94A3B8; font-family: monospace; font-size: 10.5px; }
+
+    /* 选择通知悬浮条 */
+    .selection-toast {
+      position: fixed;
+      bottom: 24px;
+      background: #10B981;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+      animation: floatUp 0.3s ease;
+    }
+    @keyframes floatUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
   </style>
 </head>
-<body>
+<body data-theme="dark-1">
 
-  <div class="top-controls">
-    <span class="preview-badge">✨ 鲜食记 v1.7.0 现代扁平化设计预览</span>
-    <span style="font-size: 13px; color: #94A3B8;">可直接在下方模拟手机中交互切换 Tab、筛选与消灭操作</span>
-  </div>
-
-  <div class="device-mockup">
-    <!-- 状态栏 -->
-    <div class="status-bar">
-      <span>09:41</span>
-      <span>📶 5G 100%</span>
+  <!-- 1. 顶部控制栏 -->
+  <div class="top-bar-panel">
+    <div class="main-title-badge">
+      <span>🥗 鲜食记 (Food FreshKeeper) · 深色模式重做方案对比工坊</span>
     </div>
 
-    <!-- 1. 首页 Tab -->
-    <div class="screen-container active" id="tab-home">
-      <!-- 问候 -->
-      <div style="margin-bottom: 14px;">
-        <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;">早上好 🌿</div>
-        <div class="greeting-title">鲜食记 · 智能管家</div>
-        <div class="greeting-sub">有 2 件食材临近保质期，建议优先食用</div>
-      </div>
-
-      <!-- 冰箱健康概览卡片 -->
-      <div class="flat-card health-card">
-        <div class="health-header">
-          <div>
-            <div style="font-size: 11px; color: var(--text-muted);">冰箱新鲜指数</div>
-            <div style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-top: 2px;">冰箱状态绝佳 🥗</div>
-          </div>
-          <div class="score-badge">92 分</div>
-        </div>
-
-        <div class="metric-grid">
-          <div class="metric-pill" onclick="switchTab('list')">
-            <div class="count" style="color: var(--primary);">🥬 6</div>
-            <div class="lbl">储藏中</div>
-          </div>
-          <div class="metric-pill" onclick="switchTab('list')">
-            <div class="count" style="color: var(--warn-amber);">🔥 2</div>
-            <div class="lbl">临期待吃</div>
-          </div>
-          <div class="metric-pill" onclick="switchTab('list')">
-            <div class="count" style="color: var(--urgent-red);">⚠️ 0</div>
-            <div class="lbl">已过期</div>
-          </div>
-          <div class="metric-pill" onclick="alert('回收站功能已就绪，当前有 1 件已删除记录')">
-            <div class="count" style="color: #64748B;">🗑️ 1</div>
-            <div class="lbl">回收站</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 抓紧消灭专区 -->
-      <div class="urgent-section-header">
-        <span style="font-size: 14px; font-weight: 800; color: var(--urgent-red);">抓紧消灭</span>
-        <span class="urgent-chip">2 件临期</span>
-      </div>
-
-      <div class="horizontal-scroll">
-        <div class="urgent-card" onclick="openDetail('全脂纯牛奶', '🥛', '冷藏室 🧊', '乳品饮品', '剩 1 天', 0.2)">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="food-icon-box" style="width: 38px; height: 38px; font-size: 20px;">🥛</div>
-            <span class="status-pill urgent">剩 1 天</span>
-          </div>
-          <div style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-top: 8px;">全脂纯牛奶</div>
-          <div style="font-size: 11px; color: var(--text-muted);">冷藏室 · 1盒</div>
-          <button class="action-btn-consume" style="width: 100%; justify-content: center; margin-top: 8px;" onclick="event.stopPropagation(); alert('🎉 牛奶已消灭！');">马上消灭 ✨</button>
-        </div>
-
-        <div class="urgent-card" onclick="openDetail('鲜草莓', '🍓', '冷藏室 🧊', '水果', '剩 2 天', 0.35)">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="food-icon-box" style="width: 38px; height: 38px; font-size: 20px;">🍓</div>
-            <span class="status-pill urgent">剩 2 天</span>
-          </div>
-          <div style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-top: 8px;">鲜草莓</div>
-          <div style="font-size: 11px; color: var(--text-muted);">冷藏室 · 500g</div>
-          <button class="action-btn-consume" style="width: 100%; justify-content: center; margin-top: 8px;" onclick="event.stopPropagation(); alert('🎉 草莓已享用！');">马上消灭 ✨</button>
-        </div>
-      </div>
-
-      <!-- 储藏空间快捷分类 -->
-      <div class="space-grid">
-        <div class="space-card fridge" onclick="switchTab('list')">
-          <div style="font-size: 22px;">🧊</div>
-          <div style="font-size: 12px; font-weight: 700; margin-top: 2px;">冷藏室</div>
-          <div style="font-size: 10px; color: var(--text-muted);">4 件</div>
-        </div>
-        <div class="space-card freezer" onclick="switchTab('list')">
-          <div style="font-size: 22px;">❄️</div>
-          <div style="font-size: 12px; font-weight: 700; margin-top: 2px;">冷冻室</div>
-          <div style="font-size: 10px; color: var(--text-muted);">1 件</div>
-        </div>
-        <div class="space-card pantry" onclick="switchTab('list')">
-          <div style="font-size: 22px;">🧺</div>
-          <div style="font-size: 12px; font-weight: 700; margin-top: 2px;">常温储藏</div>
-          <div style="font-size: 10px; color: var(--text-muted);">1 件</div>
-        </div>
-      </div>
-
-      <!-- 库藏列表标题 -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span style="font-size: 15px; font-weight: 800; color: var(--text-main);">冰箱全部库藏</span>
-        <span style="font-size: 12px; font-weight: 600; color: var(--primary); cursor: pointer;" onclick="switchTab('list')">查看全部 &gt;</span>
-      </div>
-
-      <!-- 食材卡片示范 -->
-      <div class="food-card" onclick="openDetail('西兰花', '🥦', '冷藏室 🧊', '蔬菜', '还剩 5天', 0.7)">
-        <div class="food-card-top">
-          <div class="food-icon-box">🥦</div>
-          <div class="food-meta">
-            <div class="food-name">西兰花 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">1棵</span></div>
-            <div class="food-tag-row">
-              <span class="loc-tag fridge">冷藏室</span>
-              <span style="font-size: 11px; color: var(--text-muted);">蔬菜保鲜</span>
-            </div>
-          </div>
-          <span class="status-pill fresh">还剩 5天</span>
-        </div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" style="width: 70%; background: var(--primary);"></div>
-        </div>
-        <div class="food-card-bottom">
-          <span>到期: 2026/10/06</span>
-          <button class="action-btn-consume" onclick="event.stopPropagation(); alert('已消灭西兰花！');">消灭 ✨</button>
-        </div>
-      </div>
-
-      <div class="food-card" onclick="openDetail('原切牛排', '🥩', '冷冻室 ❄️', '肉禽海鲜', '还剩 28天', 0.9)">
-        <div class="food-card-top">
-          <div class="food-icon-box" style="background: var(--freezer-bg);">🥩</div>
-          <div class="food-meta">
-            <div class="food-name">原切牛排 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">2块</span></div>
-            <div class="food-tag-row">
-              <span class="loc-tag freezer">冷冻室</span>
-              <span style="font-size: 11px; color: var(--text-muted);">肉类冷冻</span>
-            </div>
-          </div>
-          <span class="status-pill fresh">还剩 28天</span>
-        </div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" style="width: 90%; background: var(--primary);"></div>
-        </div>
-        <div class="food-card-bottom">
-          <span>到期: 2026/10/29</span>
-          <button class="action-btn-consume" onclick="event.stopPropagation(); alert('已消灭原切牛排！');">消灭 ✨</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 2. 清单 Tab -->
-    <div class="screen-container" id="tab-list">
-      <div style="font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 12px;">食材清单 📋</div>
-      <div style="background: var(--surface-variant); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-        <span style="color: var(--text-muted);">🔍</span>
-        <input type="text" placeholder="搜索食材、分类或备忘..." style="border: none; background: transparent; outline: none; width: 100%; font-size: 13px;">
-      </div>
-
-      <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px;">
-        <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; white-space: nowrap;">全部</span>
-        <span style="background: var(--surface); border: 1px solid var(--border); color: var(--text-main); padding: 4px 12px; border-radius: 10px; font-size: 12px; white-space: nowrap;">冷藏</span>
-        <span style="background: var(--surface); border: 1px solid var(--border); color: var(--text-main); padding: 4px 12px; border-radius: 10px; font-size: 12px; white-space: nowrap;">冷冻</span>
-        <span style="background: var(--surface); border: 1px solid var(--border); color: var(--text-main); padding: 4px 12px; border-radius: 10px; font-size: 12px; white-space: nowrap;">紧急临期</span>
-      </div>
-
-      <div class="food-card" onclick="openDetail('全脂纯牛奶', '🥛', '冷藏室 🧊', '乳品饮品', '剩 1 天', 0.2)">
-        <div class="food-card-top">
-          <div class="food-icon-box">🥛</div>
-          <div class="food-meta">
-            <div class="food-name">全脂纯牛奶 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">1盒</span></div>
-            <div class="food-tag-row">
-              <span class="loc-tag fridge">冷藏室</span>
-              <span style="font-size: 11px; color: var(--text-muted);">乳品</span>
-            </div>
-          </div>
-          <span class="status-pill urgent">剩 1 天</span>
-        </div>
-      </div>
-
-      <div class="food-card" onclick="openDetail('鲜草莓', '🍓', '冷藏室 🧊', '水果', '剩 2 天', 0.35)">
-        <div class="food-card-top">
-          <div class="food-icon-box">🍓</div>
-          <div class="food-meta">
-            <div class="food-name">鲜草莓 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">500g</span></div>
-            <div class="food-tag-row">
-              <span class="loc-tag fridge">冷藏室</span>
-              <span style="font-size: 11px; color: var(--text-muted);">水果</span>
-            </div>
-          </div>
-          <span class="status-pill urgent">剩 2 天</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. 妙招 Tab -->
-    <div class="screen-container" id="tab-tips">
-      <div style="font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">保鲜小妙招 💡</div>
-      <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">科学保存食材，锁住营养与原汁原味</div>
-
-      <div class="flat-card">
-        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
-          <div class="food-icon-box" style="width: 36px; height: 36px; font-size: 20px;">🍞</div>
-          <div>
-            <div style="font-size: 14px; font-weight: 700; color: var(--text-main);">面包千万别放冷藏室！</div>
-            <div style="font-size: 11px; color: var(--primary); font-weight: 600;">烘焙妙招</div>
-          </div>
-        </div>
-        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px;">
-          冷藏室温度会加速淀粉「老化回生」，导致面包迅速变干硬。
-        </div>
-        <div style="background: var(--surface-variant); padding: 8px 10px; border-radius: 10px; font-size: 11px; color: var(--text-main); line-height: 1.5;">
-          💡 秘诀：3天内吃完放常温；若吃不完切片密封冷冻，吃前加热恢复外脆内软！
-        </div>
-      </div>
-
-      <div class="flat-card">
-        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
-          <div class="food-icon-box" style="width: 36px; height: 36px; font-size: 20px;">🥚</div>
-          <div>
-            <div style="font-size: 14px; font-weight: 700; color: var(--text-main);">鸡蛋大头朝上摆放更持久</div>
-            <div style="font-size: 11px; color: var(--primary); font-weight: 600;">蛋奶保鲜</div>
-          </div>
-        </div>
-        <div style="background: var(--surface-variant); padding: 8px 10px; border-radius: 10px; font-size: 11px; color: var(--text-main); line-height: 1.5;">
-          💡 秘诀：无需清洗，直接大头朝上存入冰箱保鲜盒即可。
-        </div>
-      </div>
-    </div>
-
-    <!-- 4. 设置 Tab -->
-    <div class="screen-container" id="tab-settings">
-      <div style="font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 12px;">系统与偏好 ⚙️</div>
-
-      <div class="flat-card">
-        <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">🔔 临期提醒偏好</div>
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
-          <span>状态栏临期预警通知</span>
-          <span style="color: var(--primary); font-weight: 700;">已开启</span>
-        </div>
-        <div style="margin-top: 10px; font-size: 12px; color: var(--text-muted);">
-          提前预警阈值：<span style="background: var(--primary-container); color: var(--primary-dark); font-weight: 700; padding: 2px 8px; border-radius: 6px;">3天</span>
-        </div>
-      </div>
-
-      <div class="flat-card">
-        <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">🧹 数据与回收站</div>
-        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;">
-          <span>食材回收站 (1件)</span>
-          <span style="color: var(--primary); cursor: pointer;">查看 &gt;</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px;">
-          <span>导出离线数据包 (ZIP)</span>
-          <span style="color: var(--primary); cursor: pointer;">导出 &gt;</span>
-        </div>
-      </div>
-
-      <div style="text-align: center; margin-top: 20px;">
-        <div style="font-size: 28px;">🥗</div>
-        <div style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-top: 4px;">鲜食记 · FoodFresh</div>
-        <div style="font-size: 11px; color: var(--text-muted);">v1.7.0 现代扁平设计版</div>
-      </div>
-    </div>
-
-    <!-- 食材详情页浮层 -->
-    <div class="detail-overlay" id="detail-overlay">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <button style="background: none; border: none; font-size: 16px; font-weight: 700; color: var(--primary); cursor: pointer;" onclick="closeDetail()">← 返回</button>
-        <span style="font-size: 16px; font-weight: 700;">食材档案</span>
-        <button style="background: none; border: none; font-size: 13px; color: var(--urgent-red); cursor: pointer;" onclick="alert('移入回收站成功'); closeDetail();">删除</button>
-      </div>
-
-      <div class="flat-card" style="text-align: center; padding: 20px;">
-        <div class="food-icon-box" id="detail-icon" style="width: 72px; height: 72px; font-size: 38px; margin: 0 auto 12px; border-radius: 20px;">🥦</div>
-        <div id="detail-name" style="font-size: 20px; font-weight: 800; color: var(--text-main);">西兰花</div>
-        <div id="detail-loc" style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">冷藏室 🧊 · 蔬菜</div>
-        <div style="margin-top: 12px;">
-          <span class="status-pill fresh" id="detail-badge">还剩 5天</span>
-        </div>
-      </div>
-
-      <div class="flat-card">
-        <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">保质期时间线</div>
-        <div style="font-size: 12px; display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: var(--text-muted);">生产/购买日期</span>
-          <span style="font-weight: 600;">2026年09月29日</span>
-        </div>
-        <div style="font-size: 12px; display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: var(--text-muted);">保质期时长</span>
-          <span style="font-weight: 600;">7 天</span>
-        </div>
-        <div style="font-size: 12px; display: flex; justify-content: space-between;">
-          <span style="color: var(--text-muted);">到期截止日</span>
-          <span style="font-weight: 700; color: var(--primary-dark);">2026年10月06日</span>
-        </div>
-      </div>
-
-      <button style="width: 100%; height: 44px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer;" onclick="alert('🎉 美味已消灭！'); closeDetail();">
-        消灭它！标记已食用 ✨
+    <!-- 方案选择胶囊栏 -->
+    <div class="theme-selector-bar">
+      <button class="theme-tab-btn" onclick="setTheme('light', this)">
+        <span>☀️</span>
+        <span>浅色基准 (Light)</span>
+      </button>
+      <button class="theme-tab-btn active" onclick="setTheme('dark-1', this)">
+        <span>🌲</span>
+        <span>方案一：森苔暗涌 (Emerald Moss)</span>
+      </button>
+      <button class="theme-tab-btn" onclick="setTheme('dark-2', this)">
+        <span>❄️</span>
+        <span>方案二：霜晶极夜 (Frost Obsidian)</span>
+      </button>
+      <button class="theme-tab-btn" onclick="setTheme('dark-3', this)">
+        <span>☕</span>
+        <span>方案三：暖夜食肆 (Midnight Bistro)</span>
       </button>
     </div>
 
-    <!-- 右下角悬浮添加按钮 -->
-    <button class="fab-btn" onclick="alert('录入页面已扁平化适配，支持快速预设与实时保质期计算')">+</button>
-
-    <!-- 底部悬浮药丸导航栏 (流光液态玻璃风格) -->
-    <div class="dock-nav-bar">
-      <div class="nav-item active" onclick="switchTab('home', this)">
-        <div class="nav-icon-box">🏠</div>
-        <span>首页</span>
-      </div>
-      <div class="nav-item" onclick="switchTab('list', this)">
-        <div class="nav-icon-box">📋</div>
-        <span>清单</span>
-      </div>
-      <div class="nav-item" onclick="switchTab('tips', this)">
-        <div class="nav-icon-box">💡</div>
-        <span>妙招</span>
-      </div>
-      <div class="nav-item" onclick="switchTab('settings', this)">
-        <div class="nav-icon-box">⚙️</div>
-        <span>设置</span>
-      </div>
+    <!-- 视图模式切换 -->
+    <div class="view-mode-bar">
+      <span>视图模式：</span>
+      <button class="mode-toggle-btn active" id="btn-mode-single" onclick="toggleViewMode('single')">📱 单机沉浸视图</button>
+      <button class="mode-toggle-btn" id="btn-mode-side" onclick="toggleViewMode('side')">🔄 三大深色方案横向并排对比</button>
     </div>
   </div>
 
-  <script>
-    function switchTab(tabId, el) {
-      document.querySelectorAll('.screen-container').forEach(c => c.classList.remove('active'));
-      const target = document.getElementById('tab-' + tabId);
-      if (target) target.classList.add('active');
+  <!-- 2. 模拟器画布容器 (单机 or 3机并排) -->
+  <div class="canvas-wrapper" id="canvas-wrapper">
 
-      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-      if (el) {
-        el.classList.add('active');
-      } else {
-        const idx = { home: 0, list: 1, tips: 2, settings: 3 }[tabId] || 0;
-        document.querySelectorAll('.nav-item')[idx].classList.add('active');
+    <!-- 方案一 机身 -->
+    <div class="device-column" id="col-dark-1">
+      <div class="scheme-badge-header">
+        <div class="scheme-pill-title" style="color: #34D399; border-color: rgba(52, 211, 153, 0.4);">
+          🌲 方案一：森苔暗涌 (Emerald Moss)
+        </div>
+        <div class="scheme-pill-desc">深苔墨玉底蕴 · 鲜活自然生机 · 极度护眼柔和</div>
+        <button class="choose-scheme-btn" onclick="confirmSelectScheme('方案一：森苔暗涌 (Emerald Moss)')">
+          <span>👉 选用此方案</span>
+        </button>
+      </div>
+
+      <div class="device-mockup" data-mockup-theme="dark-1">
+        <!-- 状态栏 -->
+        <div class="status-bar">
+          <span>09:41</span>
+          <span>📶 5G 100%</span>
+        </div>
+
+        <!-- 1. 首页 Tab -->
+        <div class="screen-container active tab-home-pane">
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 500;">早上好 🌿</div>
+            <div class="greeting-title">鲜食记 · 智能管家</div>
+            <div class="greeting-sub">有 2 件食材临近保质期，建议优先食用</div>
+          </div>
+
+          <!-- 冰箱健康概览卡片 -->
+          <div class="flat-card health-card">
+            <div class="health-header">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">冰箱新鲜健康指数</div>
+                <div style="font-size: 15px; font-weight: 800; color: var(--text-main); margin-top: 2px;">冰箱状态绝佳 🥗</div>
+              </div>
+              <div class="score-badge">92 分</div>
+            </div>
+
+            <div class="metric-grid">
+              <div class="metric-pill" onclick="switchAllTabs('list')">
+                <div class="count" style="color: var(--primary);">🥬 6</div>
+                <div class="lbl">储藏中</div>
+              </div>
+              <div class="metric-pill" onclick="switchAllTabs('list')">
+                <div class="count" style="color: var(--warn-amber);">🔥 2</div>
+                <div class="lbl">临期待吃</div>
+              </div>
+              <div class="metric-pill" onclick="switchAllTabs('list')">
+                <div class="count" style="color: var(--urgent-red);">⚠️ 0</div>
+                <div class="lbl">已过期</div>
+              </div>
+              <div class="metric-pill" onclick="alert('回收站状态良好，有 1 件食材')">
+                <div class="count" style="color: var(--text-muted);">🗑️ 1</div>
+                <div class="lbl">回收站</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 抓紧消灭专区 -->
+          <div class="urgent-section-header">
+            <span style="font-size: 13.5px; font-weight: 800; color: var(--urgent-red);">抓紧消灭专区</span>
+            <span class="urgent-chip">2 件临期待食</span>
+          </div>
+
+          <div class="horizontal-scroll">
+            <div class="urgent-card" onclick="openDetailModal('全脂纯牛奶', '🥛', '冷藏室 🧊', '乳品饮品', '剩 1 天', '3盒', 0.2)">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="food-icon-box" style="width: 36px; height: 36px; font-size: 20px;">🥛</div>
+                <span class="status-pill urgent">剩 1 天</span>
+              </div>
+              <div style="font-size: 13.5px; font-weight: 700; color: var(--text-main); margin-top: 8px;">全脂纯牛奶</div>
+              <div style="font-size: 11px; color: var(--text-muted);">冷藏室 · 剩 3盒</div>
+              <button class="action-btn-consume" style="width: 100%; justify-content: center; margin-top: 8px;" onclick="event.stopPropagation(); triggerConsumeDialog('全脂纯牛奶', '3盒');">
+                消灭 😋
+              </button>
+            </div>
+
+            <div class="urgent-card" onclick="openDetailModal('鲜草莓', '🍓', '冷藏室 🧊', '新鲜水果', '剩 2 天', '500g', 0.35)">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="food-icon-box" style="width: 36px; height: 36px; font-size: 20px;">🍓</div>
+                <span class="status-pill urgent">剩 2 天</span>
+              </div>
+              <div style="font-size: 13.5px; font-weight: 700; color: var(--text-main); margin-top: 8px;">鲜草莓</div>
+              <div style="font-size: 11px; color: var(--text-muted);">冷藏室 · 500g</div>
+              <button class="action-btn-consume" style="width: 100%; justify-content: center; margin-top: 8px;" onclick="event.stopPropagation(); alert('🎉 草莓已消灭！');">
+                消灭 ✨
+              </button>
+            </div>
+          </div>
+
+          <!-- 储藏空间快捷分类 -->
+          <div class="space-grid">
+            <div class="space-card fridge" onclick="switchAllTabs('list')">
+              <div style="font-size: 20px;">🧊</div>
+              <div style="font-size: 12px; font-weight: 700; margin-top: 2px;">冷藏室</div>
+              <div style="font-size: 10px; opacity: 0.8;">4 件</div>
+            </div>
+            <div class="space-card freezer" onclick="switchAllTabs('list')">
+              <div style="font-size: 20px;">❄️</div>
+              <div style="font-size: 12px; font-weight: 700; margin-top: 2px;">冷冻室</div>
+              <div style="font-size: 10px; opacity: 0.8;">1 件</div>
+            </div>
+            <div class="space-card pantry" onclick="switchAllTabs('list')">
+              <div style="font-size: 20px;">🧺</div>
+              <div style="font-size: 12px; font-weight: 700; margin-top: 2px;">常温储藏</div>
+              <div style="font-size: 10px; opacity: 0.8;">1 件</div>
+            </div>
+          </div>
+
+          <!-- 食材卡片示范 -->
+          <div class="food-card" onclick="openDetailModal('西兰花', '🥦', '冷藏室 🧊', '绿色蔬菜', '还剩 5天', '2棵', 0.7)">
+            <div class="food-card-top">
+              <div class="food-icon-box">🥦</div>
+              <div class="food-meta">
+                <div class="food-name">西兰花 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">2棵</span></div>
+                <div class="food-tag-row">
+                  <span class="loc-tag fridge">冷藏室</span>
+                  <span style="font-size: 11px; color: var(--text-muted);">蔬菜保鲜</span>
+                </div>
+              </div>
+              <span class="status-pill fresh">还剩 5天</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" style="width: 70%; background: var(--primary);"></div>
+            </div>
+            <div class="food-card-bottom">
+              <span>到期: 2026/10/09</span>
+              <button class="action-btn-consume" onclick="event.stopPropagation(); triggerConsumeDialog('西兰花', '2棵');">消灭 🍽️</button>
+            </div>
+          </div>
+
+          <div class="food-card" onclick="openDetailModal('原切牛排', '🥩', '冷冻室 ❄️', '肉禽海鲜', '还剩 28天', '4块', 0.9)">
+            <div class="food-card-top">
+              <div class="food-icon-box" style="background: var(--freezer-bg);">🥩</div>
+              <div class="food-meta">
+                <div class="food-name">原切牛排 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">4块</span></div>
+                <div class="food-tag-row">
+                  <span class="loc-tag freezer">冷冻室</span>
+                  <span style="font-size: 11px; color: var(--text-muted);">肉类冷冻</span>
+                </div>
+              </div>
+              <span class="status-pill fresh">还剩 28天</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" style="width: 90%; background: var(--primary);"></div>
+            </div>
+            <div class="food-card-bottom">
+              <span>到期: 2026/11/01</span>
+              <button class="action-btn-consume" onclick="event.stopPropagation(); triggerConsumeDialog('原切牛排', '4块');">消灭 🍽️</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 清单 Tab -->
+        <div class="screen-container tab-list-pane">
+          <div style="font-size: 19px; font-weight: 800; color: var(--text-main); margin-bottom: 12px;">食材清单 📋</div>
+          <div style="background: var(--surface-variant); border-radius: 12px; padding: 9px 12px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <span style="color: var(--text-muted);">🔍</span>
+            <input type="text" placeholder="搜索食材、分类或保鲜备忘..." style="border: none; background: transparent; outline: none; width: 100%; font-size: 12.5px; color: var(--text-main);">
+          </div>
+
+          <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px;">
+            <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 10px; font-size: 11.5px; font-weight: 700; white-space: nowrap;">全部 (6)</span>
+            <span style="background: var(--surface-variant); border: 1px solid var(--border); color: var(--text-main); padding: 4px 12px; border-radius: 10px; font-size: 11.5px; white-space: nowrap;">冷藏 (4)</span>
+            <span style="background: var(--surface-variant); border: 1px solid var(--border); color: var(--text-main); padding: 4px 12px; border-radius: 10px; font-size: 11.5px; white-space: nowrap;">冷冻 (1)</span>
+            <span style="background: var(--surface-variant); border: 1px solid var(--border); color: var(--text-main); padding: 4px 12px; border-radius: 10px; font-size: 11.5px; white-space: nowrap;">临期 (2)</span>
+          </div>
+
+          <div class="food-card" onclick="openDetailModal('全脂纯牛奶', '🥛', '冷藏室 🧊', '乳品饮品', '剩 1 天', '3盒', 0.2)">
+            <div class="food-card-top">
+              <div class="food-icon-box">🥛</div>
+              <div class="food-meta">
+                <div class="food-name">全脂纯牛奶 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">3盒</span></div>
+                <div class="food-tag-row">
+                  <span class="loc-tag fridge">冷藏室</span>
+                  <span style="font-size: 11px; color: var(--text-muted);">早餐纯奶</span>
+                </div>
+              </div>
+              <span class="status-pill urgent">剩 1 天</span>
+            </div>
+            <div class="food-card-bottom">
+              <span>到期: 2026/10/05</span>
+              <button class="action-btn-consume" onclick="event.stopPropagation(); triggerConsumeDialog('全脂纯牛奶', '3盒');">消灭 🍽️</button>
+            </div>
+          </div>
+
+          <div class="food-card" onclick="openDetailModal('鲜草莓', '🍓', '冷藏室 🧊', '新鲜水果', '剩 2 天', '500g', 0.35)">
+            <div class="food-card-top">
+              <div class="food-icon-box">🍓</div>
+              <div class="food-meta">
+                <div class="food-name">鲜草莓 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">500g</span></div>
+                <div class="food-tag-row">
+                  <span class="loc-tag fridge">冷藏室</span>
+                  <span style="font-size: 11px; color: var(--text-muted);">新鲜草莓</span>
+                </div>
+              </div>
+              <span class="status-pill urgent">剩 2 天</span>
+            </div>
+            <div class="food-card-bottom">
+              <span>到期: 2026/10/06</span>
+              <button class="action-btn-consume" onclick="event.stopPropagation(); alert('🎉 草莓已消灭！');">消灭 ✨</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 妙招 Tab -->
+        <div class="screen-container tab-tips-pane">
+          <div style="font-size: 19px; font-weight: 800; color: var(--text-main); margin-bottom: 2px;">保鲜小妙招 💡</div>
+          <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px;">科学储存食材，锁住原汁原味与鲜活营养</div>
+
+          <div class="flat-card">
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+              <div class="food-icon-box" style="width: 36px; height: 36px; font-size: 20px;">🍞</div>
+              <div>
+                <div style="font-size: 13.5px; font-weight: 700; color: var(--text-main);">面包千万别放冷藏室！</div>
+                <div style="font-size: 11px; color: var(--primary); font-weight: 600;">烘焙妙招</div>
+              </div>
+            </div>
+            <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px;">
+              冷藏室温度会加速淀粉老化，导致面包迅速发干发硬。
+            </div>
+            <div style="background: var(--surface-variant); padding: 8px 10px; border-radius: 10px; font-size: 11px; color: var(--text-main); line-height: 1.5;">
+              💡 秘诀：3天内吃完放常温；吃不完切片密封冷冻，复烤后外脆内软！
+            </div>
+          </div>
+
+          <div class="flat-card">
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+              <div class="food-icon-box" style="width: 36px; height: 36px; font-size: 20px;">🥚</div>
+              <div>
+                <div style="font-size: 13.5px; font-weight: 700; color: var(--text-main);">鸡蛋大头朝上摆放更持久</div>
+                <div style="font-size: 11px; color: var(--primary); font-weight: 600;">蛋品保鲜</div>
+              </div>
+            </div>
+            <div style="background: var(--surface-variant); padding: 8px 10px; border-radius: 10px; font-size: 11px; color: var(--text-main); line-height: 1.5;">
+              💡 秘诀：无需清洗，直接大头朝上存入冰箱保鲜盒即可。
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 设置 Tab -->
+        <div class="screen-container tab-settings-pane">
+          <div style="font-size: 19px; font-weight: 800; color: var(--text-main); margin-bottom: 12px;">系统与偏好 ⚙️</div>
+
+          <div class="flat-card">
+            <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 8px;">🔔 临期预警提醒</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;">
+              <span>系统通知栏到期预警</span>
+              <span style="color: var(--primary); font-weight: 700;">已开启</span>
+            </div>
+            <div style="margin-top: 8px; font-size: 11.5px; color: var(--text-muted);">
+              提前预警阈值：<span style="background: var(--primary-container); color: var(--primary-dark); font-weight: 700; padding: 2px 8px; border-radius: 6px;">3天</span>
+            </div>
+          </div>
+
+          <div class="flat-card">
+            <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 8px;">🧹 数据同步与迁移</div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12.5px;">
+              <span>局域网私有云同步</span>
+              <span style="color: var(--primary); cursor: pointer;">配置 &gt;</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 12.5px;">
+              <span>离线数据包备份 (ZIP)</span>
+              <span style="color: var(--primary); cursor: pointer;">导出 &gt;</span>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 24px;">
+            <div style="font-size: 26px;">🥗</div>
+            <div style="font-size: 13.5px; font-weight: 700; color: var(--text-main); margin-top: 4px;">鲜食记 · FoodFresh</div>
+            <div style="font-size: 11px; color: var(--text-muted);">v1.8.0 现代扁平设计版</div>
+          </div>
+        </div>
+
+        <!-- 5. 食材档案详情浮层 (展示 V1.8.0 就地快捷消灭行) -->
+        <div class="detail-overlay detail-overlay-pane">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <button style="background: none; border: none; font-size: 14px; font-weight: 700; color: var(--primary); cursor: pointer;" onclick="closeDetailModal()">← 返回</button>
+            <span style="font-size: 15px; font-weight: 700; color: var(--text-main);">食材档案</span>
+            <button style="background: none; border: none; font-size: 12.5px; color: var(--urgent-red); cursor: pointer;" onclick="alert('已移入回收站'); closeDetailModal();">删除</button>
+          </div>
+
+          <div class="flat-card" style="text-align: center; padding: 16px;">
+            <div class="food-icon-box detail-icon-el" style="width: 64px; height: 64px; font-size: 34px; margin: 0 auto 10px; border-radius: 18px;">🥦</div>
+            <div class="detail-name-el" style="font-size: 18px; font-weight: 800; color: var(--text-main);">西兰花</div>
+            <div class="detail-loc-el" style="font-size: 11.5px; color: var(--text-muted); margin-top: 3px;">冷藏室 🧊 · 绿色蔬菜</div>
+            <div style="margin-top: 10px;">
+              <span class="status-pill fresh detail-badge-el">还剩 5天</span>
+            </div>
+          </div>
+
+          <!-- 快捷操作区 (DetailScreen V1.8.0 核心就地消灭行) -->
+          <div class="flat-card">
+            <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 8px;">快捷操作</div>
+
+            <!-- 就地快捷消灭数量步进行 -->
+            <div class="shortcut-consume-row">
+              <div>
+                <div style="font-size: 12.5px; font-weight: 800; color: var(--primary);">🍽️ 快捷消灭</div>
+                <div style="font-size: 10.5px; color: var(--text-muted);" class="detail-qty-remain">当前在库: 3盒</div>
+              </div>
+              <div class="stepper-wrap">
+                <button class="stepper-btn" onclick="stepDetailQty(-1)">-</button>
+                <span class="stepper-val" id="detail-step-val">1盒</span>
+                <button class="stepper-btn" onclick="stepDetailQty(1)">+</button>
+                <button class="btn-consume-action" onclick="execDetailConsume()">消灭</button>
+              </div>
+            </div>
+
+            <!-- 全部消灭按钮 -->
+            <button style="width: 100%; height: 40px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 8px;" onclick="alert('🎉 已全部消灭！'); closeDetailModal();">
+              全部消灭 (共 3盒) ✨
+            </button>
+
+            <!-- 移入回收站 -->
+            <button style="width: 100%; height: 38px; background: transparent; border: 1px solid var(--urgent-border); color: var(--urgent-red); border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer;" onclick="alert('已移入回收站'); closeDetailModal();">
+              移入回收站
+            </button>
+          </div>
+        </div>
+
+        <!-- 6. 多件消灭弹窗模拟 (HomeScreen / ListScreen 点击触发) -->
+        <div class="dialog-backdrop" id="consume-dialog-modal">
+          <div class="dialog-box">
+            <div style="font-size: 32px; margin-bottom: 6px;">🍽️</div>
+            <div style="font-size: 15px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;" id="dialog-food-title">消灭【全脂纯牛奶】</div>
+            <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px;">当前库存共 <span id="dialog-food-total" style="font-weight: 700; color: var(--primary);">3盒</span>，请选择本次食用数量</div>
+
+            <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 14px;">
+              <button class="stepper-btn" style="width: 36px; height: 36px; font-size: 16px;" onclick="stepDialogCount(-1)">-</button>
+              <span style="font-size: 18px; font-weight: 800; color: var(--text-main);" id="dialog-count-txt">1 盒</span>
+              <button class="stepper-btn" style="width: 36px; height: 36px; font-size: 16px;" onclick="stepDialogCount(1)">+</button>
+            </div>
+
+            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 14px;">
+              <button style="background: var(--surface-variant); border: 1px solid var(--border); color: var(--text-main); padding: 4px 10px; border-radius: 8px; font-size: 11px;" onclick="setDialogCount(1)">消灭 1 盒</button>
+              <button style="background: var(--surface-variant); border: 1px solid var(--border); color: var(--text-main); padding: 4px 10px; border-radius: 8px; font-size: 11px;" onclick="setDialogCount(2)">半数 (2盒)</button>
+              <button style="background: var(--surface-variant); border: 1px solid var(--border); color: var(--text-main); padding: 4px 10px; border-radius: 8px; font-size: 11px;" onclick="setDialogCount(3)">全部 (3盒)</button>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button style="flex: 1; height: 38px; background: var(--surface-variant); border: none; border-radius: 10px; color: var(--text-muted); font-size: 12px; font-weight: 600;" onclick="closeConsumeDialog()">取消</button>
+              <button style="flex: 1; height: 38px; background: var(--primary); border: none; border-radius: 10px; color: white; font-size: 12px; font-weight: 700;" onclick="confirmConsumeDialog()">确认消灭</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. FAB 悬浮加号 -->
+        <button class="fab-btn" onclick="openAddDialog()">+</button>
+
+        <!-- 8. 流光液态玻璃悬浮微岛底栏 -->
+        <div class="dock-nav-bar">
+          <div class="nav-item active" onclick="switchAllTabs('home')">
+            <div class="nav-icon-box">🏠</div>
+            <span>首页</span>
+          </div>
+          <div class="nav-item" onclick="switchAllTabs('list')">
+            <div class="nav-icon-box">📋</div>
+            <span>清单</span>
+          </div>
+          <div class="nav-item" onclick="switchAllTabs('tips')">
+            <div class="nav-icon-box">💡</div>
+            <span>妙招</span>
+          </div>
+          <div class="nav-item" onclick="switchAllTabs('settings')">
+            <div class="nav-icon-box">⚙️</div>
+            <span>设置</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案二 机身 (在并排模式下展示) -->
+    <div class="device-column" id="col-dark-2" style="display: none;">
+      <div class="scheme-badge-header">
+        <div class="scheme-pill-title" style="color: #00E599; border-color: rgba(0, 229, 153, 0.4);">
+          ❄️ 方案二：霜晶极夜 (Frost Obsidian)
+        </div>
+        <div class="scheme-pill-desc">OLED纯黑冷萃 · 冰霜荧光线条 · 现代克制极简</div>
+        <button class="choose-scheme-btn" style="background: linear-gradient(135deg, #00E599, #00875A);" onclick="confirmSelectScheme('方案二：霜晶极夜 (Frost Obsidian)')">
+          <span>👉 选用此方案</span>
+        </button>
+      </div>
+      <div class="device-mockup" data-mockup-theme="dark-2" id="mockup-clone-2">
+        <!-- 内容通过 JS 动态镜像 -->
+      </div>
+    </div>
+
+    <!-- 方案三 机身 (在并排模式下展示) -->
+    <div class="device-column" id="col-dark-3" style="display: none;">
+      <div class="scheme-badge-header">
+        <div class="scheme-pill-title" style="color: #4ADE80; border-color: rgba(74, 222, 128, 0.4);">
+          ☕ 方案三：暖夜食肆 (Midnight Bistro)
+        </div>
+        <div class="scheme-pill-desc">深焙咖啡暖木 · 羊皮纸温和文字 · 治愈烟火气</div>
+        <button class="choose-scheme-btn" style="background: linear-gradient(135deg, #22C55E, #15803D);" onclick="confirmSelectScheme('方案三：暖夜食肆 (Midnight Bistro)')">
+          <span>👉 选用此方案</span>
+        </button>
+      </div>
+      <div class="device-mockup" data-mockup-theme="dark-3" id="mockup-clone-3">
+        <!-- 内容通过 JS 动态镜像 -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 3. 当前方案设计参数与色彩矩阵卡片 (Design Tokens Inspector) -->
+  <div class="specs-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <div style="font-size: 16px; font-weight: 800; color: #FFFFFF;" id="spec-title">🌲 方案一：森苔暗涌 (Emerald Moss)</div>
+        <div style="font-size: 12px; color: #94A3B8; margin-top: 3px;" id="spec-subtitle">自然有机森林墨苔底色 · 晨曦翡翠生机绿 · 视觉对比度舒适防疲劳</div>
+      </div>
+      <button class="choose-scheme-btn" id="spec-choose-btn" onclick="confirmSelectCurrentTheme()">
+        <span>⭐ 就选这个方案</span>
+      </button>
+    </div>
+
+    <!-- 色卡矩阵 -->
+    <div class="swatch-grid" id="swatch-grid">
+      <!-- 动态渲染色块 -->
+    </div>
+  </div>
+
+  <!-- 浮动选择成功提示 -->
+  <div class="selection-toast" id="toast-notify">
+    <span>✅ 已为您选定方案！正在生成代码...</span>
+  </div>
+
+  <script>
+    // 色彩字典
+    const THEME_SPECS = {
+      "light": {
+        title: "☀️ 浅色基准 (Light Minimal)",
+        desc: "日间纯净薄荷晨绿，白底通透极简，作为设计对照基准",
+        swatches: [
+          { name: "Background", hex: "#F8FAFC" },
+          { name: "Surface", hex: "#FFFFFF" },
+          { name: "Primary", hex: "#10B981" },
+          { name: "Border", hex: "#E2E8F0" },
+          { name: "Urgent Red", hex: "#EF4444" },
+          { name: "Warn Amber", hex: "#F59E0B" }
+        ]
+      },
+      "dark-1": {
+        title: "🌲 方案一：森苔暗涌 (Emerald Moss)",
+        desc: "灵感来源于深邃雨林与有机墨苔。背景不是生硬死板的蓝灰，而是深邃温润的暗森墨玉（#090E0B），核心主色为如晨光般的翡翠绿（#10B981），长时间查看极度舒缓养眼。",
+        swatches: [
+          { name: "Dark Bg", hex: "#090E0B" },
+          { name: "Surface", hex: "#121A15" },
+          { name: "Surface Var", hex: "#18241D" },
+          { name: "Emerald Main", hex: "#10B981" },
+          { name: "Border", hex: "#21362A" },
+          { name: "Urgent Berry", hex: "#FB7185" },
+          { name: "Amber Sun", hex: "#FBBF24" }
+        ]
+      },
+      "dark-2": {
+        title: "❄️ 方案二：霜晶极夜 (Frost Obsidian)",
+        desc: "灵感来源于现代高奢冷链与极地冰川。采用纯粹的 OLED 极致纯黑（#07080A），配合高纯度冷萃薄荷绿（#00E599）与 0.8px 冰晶微发光轮廓，充满现代冷冽科技感。",
+        swatches: [
+          { name: "OLED Black", hex: "#07080A" },
+          { name: "Graphite", hex: "#111317" },
+          { name: "Rock Variant", hex: "#181B22" },
+          { name: "Frost Mint", hex: "#00E599" },
+          { name: "Crystal Rim", hex: "rgba(255,255,255,0.08)" },
+          { name: "Neon Coral", hex: "#FF4D6D" },
+          { name: "Aurora Amber", hex: "#FFB703" }
+        ]
+      },
+      "dark-3": {
+        title: "☕ 方案三：暖夜食肆 (Midnight Bistro)",
+        desc: "灵感来源于深夜家庭厨房、黑胡桃木案与热腾料理。采用深焙咖啡原豆暖暗色（#0D0B09），搭配羊皮纸温润奶白文字与抹茶暖玉绿（#22C55E），散发令人心安的人间烟火温度。",
+        swatches: [
+          { name: "Dark Roast", hex: "#0D0B09" },
+          { name: "Walnut Wood", hex: "#181512" },
+          { name: "Warm Oat", hex: "#231E19" },
+          { name: "Matcha Jade", hex: "#22C55E" },
+          { name: "Warm Rim", hex: "#2E2720" },
+          { name: "Rose Apple", hex: "#F43F5E" },
+          { name: "Maple Sugar", hex: "#F59E0B" }
+        ]
+      }
+    };
+
+    let currentTheme = 'dark-1';
+    let currentTab = 'home';
+    let detailCount = 1;
+    let dialogCount = 1;
+    let isSideBySide = false;
+
+    function setTheme(themeKey, btnEl) {
+      currentTheme = themeKey;
+      document.body.setAttribute('data-theme', themeKey);
+
+      document.querySelectorAll('.theme-tab-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      updateSpecsPanel(themeKey);
+
+      if (isSideBySide && themeKey === 'light') {
+        toggleViewMode('single');
       }
     }
 
-    function openDetail(name, emoji, loc, cat, badgeText, progress) {
-      document.getElementById('detail-name').innerText = name;
-      document.getElementById('detail-icon').innerText = emoji;
-      document.getElementById('detail-loc').innerText = loc + ' · ' + cat;
-      document.getElementById('detail-badge').innerText = badgeText;
-      document.getElementById('detail-overlay').classList.add('active');
+    function updateSpecsPanel(themeKey) {
+      const spec = THEME_SPECS[themeKey] || THEME_SPECS['dark-1'];
+      document.getElementById('spec-title').innerText = spec.title;
+      document.getElementById('spec-subtitle').innerText = spec.desc;
+
+      const grid = document.getElementById('swatch-grid');
+      grid.innerHTML = '';
+      spec.swatches.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'swatch-item';
+        item.innerHTML = `
+          <div class="swatch-color-box" style="background: ${s.hex};"></div>
+          <div class="swatch-meta">
+            <div class="swatch-name">${s.name}</div>
+            <div class="swatch-hex">${s.hex}</div>
+          </div>
+        `;
+        grid.appendChild(item);
+      });
     }
 
-    function closeDetail() {
-      document.getElementById('detail-overlay').classList.remove('active');
+    function toggleViewMode(mode) {
+      const wrapper = document.getElementById('canvas-wrapper');
+      const col2 = document.getElementById('col-dark-2');
+      const col3 = document.getElementById('col-dark-3');
+      const btnSingle = document.getElementById('btn-mode-single');
+      const btnSide = document.getElementById('btn-mode-side');
+
+      if (mode === 'side') {
+        isSideBySide = true;
+        wrapper.classList.add('side-by-side');
+        btnSide.classList.add('active');
+        btnSingle.classList.remove('active');
+        col2.style.display = 'flex';
+        col3.style.display = 'flex';
+
+        // 复制机身内 DOM 到克隆体中
+        const mockup1 = document.querySelector('#col-dark-1 .device-mockup');
+        document.getElementById('mockup-clone-2').innerHTML = mockup1.innerHTML;
+        document.getElementById('mockup-clone-3').innerHTML = mockup1.innerHTML;
+
+      } else {
+        isSideBySide = false;
+        wrapper.classList.remove('side-by-side');
+        btnSingle.classList.add('active');
+        btnSide.classList.remove('active');
+        col2.style.display = 'none';
+        col3.style.display = 'none';
+      }
     }
+
+    function switchAllTabs(tabName) {
+      currentTab = tabName;
+      document.querySelectorAll('.screen-container').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab-' + tabName + '-pane').forEach(c => c.classList.add('active'));
+
+      const tabIdx = { home: 0, list: 1, tips: 2, settings: 3 }[tabName] || 0;
+      document.querySelectorAll('.dock-nav-bar').forEach(bar => {
+        bar.querySelectorAll('.nav-item').forEach((item, idx) => {
+          if (idx === tabIdx) item.classList.add('active');
+          else item.classList.remove('active');
+        });
+      });
+    }
+
+    function openDetailModal(name, emoji, loc, cat, badgeText, totalQty, progress) {
+      document.querySelectorAll('.detail-name-el').forEach(el => el.innerText = name);
+      document.querySelectorAll('.detail-icon-el').forEach(el => el.innerText = emoji);
+      document.querySelectorAll('.detail-loc-el').forEach(el => el.innerText = loc + ' · ' + cat);
+      document.querySelectorAll('.detail-badge-el').forEach(el => el.innerText = badgeText);
+      document.querySelectorAll('.detail-qty-remain').forEach(el => el.innerText = '当前在库: ' + totalQty);
+
+      detailCount = 1;
+      document.querySelectorAll('#detail-step-val').forEach(el => el.innerText = '1盒');
+
+      document.querySelectorAll('.detail-overlay-pane').forEach(el => el.classList.add('active'));
+    }
+
+    function closeDetailModal() {
+      document.querySelectorAll('.detail-overlay-pane').forEach(el => el.classList.remove('active'));
+    }
+
+    function stepDetailQty(delta) {
+      detailCount = Math.max(1, Math.min(3, detailCount + delta));
+      document.querySelectorAll('#detail-step-val').forEach(el => el.innerText = detailCount + '盒');
+    }
+
+    function execDetailConsume() {
+      alert(`😋 已就地消灭 ${detailCount} 盒，剩余 ${3 - detailCount} 盒！`);
+      if (detailCount >= 3) closeDetailModal();
+    }
+
+    function triggerConsumeDialog(name, totalQty) {
+      document.getElementById('dialog-food-title').innerText = `消灭【${name}】`;
+      document.getElementById('dialog-food-total').innerText = totalQty;
+      dialogCount = 1;
+      document.getElementById('dialog-count-txt').innerText = '1 盒';
+      document.getElementById('consume-dialog-modal').classList.add('active');
+    }
+
+    function closeConsumeDialog() {
+      document.getElementById('consume-dialog-modal').classList.remove('active');
+    }
+
+    function stepDialogCount(delta) {
+      dialogCount = Math.max(1, Math.min(3, dialogCount + delta));
+      document.getElementById('dialog-count-txt').innerText = dialogCount + ' 盒';
+    }
+
+    function setDialogCount(cnt) {
+      dialogCount = cnt;
+      document.getElementById('dialog-count-txt').innerText = dialogCount + ' 盒';
+    }
+
+    function confirmConsumeDialog() {
+      alert(`🎉 成功消灭 ${dialogCount} 盒！`);
+      closeConsumeDialog();
+    }
+
+    function openAddDialog() {
+      alert('📝 添加界面已支持左侧输入数字、右侧 Select 下拉菜单单选（份、包、斤、个等）！');
+    }
+
+    function confirmSelectScheme(name) {
+      const toast = document.getElementById('toast-notify');
+      toast.innerHTML = `✅ 您已选择【${name}】！告诉助理即可为您一键生效代码。`;
+      toast.style.display = 'flex';
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
+
+    function confirmSelectCurrentTheme() {
+      const spec = THEME_SPECS[currentTheme];
+      confirmSelectScheme(spec.title);
+    }
+
+    // 初始化
+    updateSpecsPanel('dark-1');
   </script>
-
 </body>
 </html>
-

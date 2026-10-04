@@ -14,10 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.food.freshkeeper.ui.theme.FreshGreenContainer
-import com.food.freshkeeper.ui.theme.FreshGreenDark
-import com.food.freshkeeper.ui.theme.FreshGreenLight
-import com.food.freshkeeper.ui.theme.FreshGreenPrimary
+import com.food.freshkeeper.ui.theme.*
 
 data class FoodTipItem(
     val title: String,
@@ -74,6 +71,9 @@ val TIPS_LIST = listOf(
 
 @Composable
 fun TipsScreen() {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val primaryColor = if (isDark) DarkFrostPrimary else FreshGreenPrimary
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -115,7 +115,7 @@ fun TipsScreen() {
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(FreshGreenLight.copy(alpha = 0.6f)),
+                                .background(if (isDark) DarkFrostPrimaryContainer else FreshGreenLight.copy(alpha = 0.6f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(text = tip.emoji, fontSize = 22.sp)
@@ -133,7 +133,7 @@ fun TipsScreen() {
                             Text(
                                 text = tip.category,
                                 fontSize = 11.sp,
-                                color = FreshGreenPrimary,
+                                color = primaryColor,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }

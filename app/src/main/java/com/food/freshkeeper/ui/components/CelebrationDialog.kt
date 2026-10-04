@@ -55,7 +55,7 @@ fun CelebrationDialog(
                 Button(
                     onClick = onDismiss,
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("继续保持 ✨", fontWeight = FontWeight.Bold, fontSize = 13.sp)

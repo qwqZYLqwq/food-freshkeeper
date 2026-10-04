@@ -154,6 +154,10 @@ fun HomeScreen(
                 if (urgentFoods.isNotEmpty()) {
                     item {
                         Column {
+                            val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+                            val urgentHeaderColor = if (isDark) DarkUrgentRed else UrgentRed
+                            val urgentHeaderBg = if (isDark) DarkUrgentRedBg else UrgentRedBg
+
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(vertical = 2.dp)
@@ -162,20 +166,20 @@ fun HomeScreen(
                                     text = "抓紧消灭",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = UrgentRed
+                                    color = urgentHeaderColor
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(6.dp))
-                                        .background(UrgentRedBg)
+                                        .background(urgentHeaderBg)
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
                                         text = "${urgentFoods.size} 件临期",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = UrgentRed
+                                        color = urgentHeaderColor
                                     )
                                 }
                             }
@@ -326,11 +330,17 @@ fun UrgentFoodCard(
     onClick: () -> Unit,
     onConsume: () -> Unit
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val days = food.remainingDays()
+    val urgentColor = if (isDark) DarkUrgentRed else UrgentRed
+    val urgentBg = if (isDark) DarkUrgentRedBg else UrgentRedBg
+    val urgentBorder = if (isDark) DarkUrgentRedBorder else UrgentRedBorder
+    val iconBg = if (isDark) DarkFrostPrimaryContainer else FreshGreenLight.copy(alpha = 0.5f)
+
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, UrgentRedBorder),
+        border = androidx.compose.foundation.BorderStroke(1.dp, urgentBorder),
         modifier = Modifier
             .width(200.dp)
             .clickable(onClick = onClick)
@@ -346,7 +356,7 @@ fun UrgentFoodCard(
                     modifier = Modifier
                         .size(38.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(FreshGreenLight.copy(alpha = 0.5f)),
+                        .background(iconBg),
                     contentAlignment = Alignment.Center
                 ) {
                     if (!food.imageUri.isNullOrBlank()) {
@@ -364,13 +374,13 @@ fun UrgentFoodCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(UrgentRedBg)
-                        .border(0.8.dp, UrgentRedBorder, RoundedCornerShape(6.dp))
+                        .background(urgentBg)
+                        .border(0.8.dp, urgentBorder, RoundedCornerShape(6.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = if (days == 0) "今日到期" else "剩 ${days} 天",
-                        color = UrgentRed,
+                        color = urgentColor,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -398,8 +408,8 @@ fun UrgentFoodCard(
                 onClick = onConsume,
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = UrgentRedBg,
-                    contentColor = UrgentRed
+                    containerColor = urgentBg,
+                    contentColor = urgentColor
                 ),
                 contentPadding = PaddingValues(vertical = 2.dp),
                 modifier = Modifier
@@ -417,6 +427,7 @@ fun StorageSpaceQuickGrid(
     activeFoods: List<FoodItem>,
     onSpaceClick: (String) -> Unit
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val fridgeCount = activeFoods.count { it.location.contains("冷藏") }
     val freezerCount = activeFoods.count { it.location.contains("冷冻") }
     val pantryCount = activeFoods.count { it.location.contains("常温") }
@@ -429,9 +440,9 @@ fun StorageSpaceQuickGrid(
             title = "冷藏室",
             emoji = "🧊",
             count = fridgeCount,
-            bgColor = FridgeBlueBg,
-            borderColor = FridgeBlueBorder,
-            accentColor = FridgeBlue,
+            bgColor = if (isDark) DarkFridgeBlueBg else FridgeBlueBg,
+            borderColor = if (isDark) DarkFridgeBlueBorder else FridgeBlueBorder,
+            accentColor = if (isDark) DarkFridgeBlue else FridgeBlue,
             onClick = { onSpaceClick("冷藏") },
             modifier = Modifier.weight(1f)
         )
@@ -439,9 +450,9 @@ fun StorageSpaceQuickGrid(
             title = "冷冻室",
             emoji = "❄️",
             count = freezerCount,
-            bgColor = FreezerIndigoBg,
-            borderColor = FreezerIndigoBorder,
-            accentColor = FreezerIndigo,
+            bgColor = if (isDark) DarkFreezerIndigoBg else FreezerIndigoBg,
+            borderColor = if (isDark) DarkFreezerIndigoBorder else FreezerIndigoBorder,
+            accentColor = if (isDark) DarkFreezerIndigo else FreezerIndigo,
             onClick = { onSpaceClick("冷冻") },
             modifier = Modifier.weight(1f)
         )
@@ -449,9 +460,9 @@ fun StorageSpaceQuickGrid(
             title = "常温储藏",
             emoji = "🧺",
             count = pantryCount,
-            bgColor = PantryWarmBg,
-            borderColor = PantryWarmBorder,
-            accentColor = PantryWarm,
+            bgColor = if (isDark) DarkPantryWarmBg else PantryWarmBg,
+            borderColor = if (isDark) DarkPantryWarmBorder else PantryWarmBorder,
+            accentColor = if (isDark) DarkPantryWarm else PantryWarm,
             onClick = { onSpaceClick("常温") },
             modifier = Modifier.weight(1f)
         )
@@ -469,14 +480,10 @@ private fun SpaceCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val finalBg = if (isDark) accentColor.copy(alpha = 0.12f) else bgColor
-    val finalBorder = if (isDark) accentColor.copy(alpha = 0.28f) else borderColor
-
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = finalBg,
-        border = androidx.compose.foundation.BorderStroke(0.8.dp, finalBorder),
+        color = bgColor,
+        border = androidx.compose.foundation.BorderStroke(0.8.dp, borderColor),
         modifier = modifier.clickable(onClick = onClick)
     ) {
         Column(

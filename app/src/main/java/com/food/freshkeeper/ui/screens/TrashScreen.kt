@@ -23,12 +23,7 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.food.freshkeeper.FoodViewModel
 import com.food.freshkeeper.data.FoodItem
-import com.food.freshkeeper.ui.theme.FreshGreenContainer
-import com.food.freshkeeper.ui.theme.FreshGreenDark
-import com.food.freshkeeper.ui.theme.FreshGreenLight
-import com.food.freshkeeper.ui.theme.FreshGreenPrimary
-import com.food.freshkeeper.ui.theme.UrgentRed
-import com.food.freshkeeper.ui.theme.UrgentRedBg
+import com.food.freshkeeper.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -39,6 +34,10 @@ fun TrashScreen(
     navController: NavHostController,
     viewModel: FoodViewModel
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val primaryColor = if (isDark) DarkFrostPrimary else FreshGreenPrimary
+    val urgentColor = if (isDark) DarkUrgentRed else UrgentRed
+
     val trashFoods by viewModel.trashFoods.collectAsState()
     var showEmptyTrashConfirm by remember { mutableStateOf(false) }
 
@@ -54,7 +53,7 @@ fun TrashScreen(
                         showEmptyTrashConfirm = false
                     }
                 ) {
-                    Text("彻底清空", color = UrgentRed, fontWeight = FontWeight.Bold)
+                    Text("彻底清空", color = urgentColor, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -79,12 +78,12 @@ fun TrashScreen(
                         TextButton(
                             onClick = { viewModel.restoreAllTrash() }
                         ) {
-                            Text("全部恢复", color = FreshGreenPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Text("全部恢复", color = primaryColor, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                         }
                         TextButton(
                             onClick = { showEmptyTrashConfirm = true }
                         ) {
-                            Text("清空", color = UrgentRed, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Text("清空", color = urgentColor, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                         }
                     }
                 },
@@ -171,6 +170,9 @@ fun TrashFoodItemCard(
     onRestore: () -> Unit,
     onPermanentDelete: () -> Unit
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val primaryColor = if (isDark) DarkFrostPrimary else FreshGreenPrimary
+    val urgentColor = if (isDark) DarkUrgentRed else UrgentRed
     val dateFormat = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault())
     val deleteTimeStr = if (food.deletedAtMs != null) dateFormat.format(Date(food.deletedAtMs)) else "未知时间"
 
@@ -190,7 +192,7 @@ fun TrashFoodItemCard(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(FreshGreenLight.copy(alpha = 0.5f)),
+                    .background(if (isDark) DarkFrostPrimaryContainer else FreshGreenLight.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
                 if (!food.imageUri.isNullOrBlank()) {
@@ -235,8 +237,8 @@ fun TrashFoodItemCard(
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = FreshGreenContainer,
-                        contentColor = FreshGreenDark
+                        containerColor = if (isDark) DarkFrostPrimaryContainer else FreshGreenContainer,
+                        contentColor = if (isDark) DarkFrostPrimary else FreshGreenDark
                     ),
                     modifier = Modifier.height(28.dp)
                 ) {
@@ -250,7 +252,7 @@ fun TrashFoodItemCard(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "彻底删除",
-                        tint = UrgentRed.copy(alpha = 0.7f),
+                        tint = urgentColor.copy(alpha = 0.7f),
                         modifier = Modifier.size(16.dp)
                     )
                 }

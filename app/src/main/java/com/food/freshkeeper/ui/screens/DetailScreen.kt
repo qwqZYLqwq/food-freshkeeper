@@ -145,6 +145,10 @@ fun DetailScreen(
         label = "containerReflow"
     )
 
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val primaryColor = if (isDark) DarkFrostPrimary else FreshGreenPrimary
+    val urgentColor = if (isDark) DarkUrgentRed else UrgentRed
+
     if (showDeleteConfirm && food != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
@@ -158,7 +162,7 @@ fun DetailScreen(
                         navController.popBackStack()
                     }
                 ) {
-                    Text("移入回收站", color = UrgentRed, fontWeight = FontWeight.Bold)
+                    Text("移入回收站", color = urgentColor, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -180,10 +184,10 @@ fun DetailScreen(
                 },
                 actions = {
                     IconButton(onClick = { navController.navigate("add_edit?foodId=$foodId") }) {
-                        Icon(Icons.Default.Edit, contentDescription = "编辑", tint = FreshGreenPrimary)
+                        Icon(Icons.Default.Edit, contentDescription = "编辑", tint = primaryColor)
                     }
                     IconButton(onClick = { showDeleteConfirm = true }) {
-                        Icon(Icons.Default.DeleteOutline, contentDescription = "删除", tint = UrgentRed)
+                        Icon(Icons.Default.DeleteOutline, contentDescription = "删除", tint = urgentColor)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -199,7 +203,7 @@ fun DetailScreen(
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = FreshGreenPrimary)
+                CircularProgressIndicator(color = primaryColor)
             }
         } else {
             val item = food!!
@@ -242,7 +246,7 @@ fun DetailScreen(
                             modifier = Modifier
                                 .size(imageSize)
                                 .clip(RoundedCornerShape(imageCorner))
-                                .background(FreshGreenLight.copy(alpha = 0.6f))
+                                .background(if (isDark) DarkFrostPrimaryContainer else FreshGreenLight.copy(alpha = 0.6f))
                                 .then(
                                     if (!item.imageUri.isNullOrBlank()) {
                                         Modifier.clickable { showImagePreview = true }
@@ -350,7 +354,7 @@ fun DetailScreen(
                             label = "到期截止日",
                             value = expDateStr,
                             icon = Icons.Default.EventBusy,
-                            valueColor = if (days <= 2) UrgentRed else FreshGreenDark
+                            valueColor = if (days <= 2) urgentColor else (if (isDark) DarkFrostPrimary else FreshGreenDark)
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                         DetailInfoRow(
@@ -362,7 +366,7 @@ fun DetailScreen(
                                 else -> "还剩 $days 天"
                             },
                             icon = Icons.Default.Timer,
-                            valueColor = if (days <= 2) UrgentRed else FreshGreenDark
+                            valueColor = if (days <= 2) urgentColor else (if (isDark) DarkFrostPrimary else FreshGreenDark)
                         )
                     }
                 }
@@ -420,8 +424,8 @@ fun DetailScreen(
                                 // 离散多件快捷消灭行（无需弹窗，直接就地选择数量消灭）
                                 Surface(
                                     shape = RoundedCornerShape(14.dp),
-                                    color = FreshGreenLight.copy(alpha = 0.45f),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, FreshGreenPrimary.copy(alpha = 0.35f)),
+                                    color = if (isDark) DarkFrostPrimaryContainer else FreshGreenLight.copy(alpha = 0.45f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) DarkFrostPrimary.copy(alpha = 0.4f) else FreshGreenPrimary.copy(alpha = 0.35f)),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Row(
@@ -436,7 +440,7 @@ fun DetailScreen(
                                                 text = "🍽️ 快捷消灭",
                                                 fontSize = 13.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = FreshGreenPrimary
+                                                color = primaryColor
                                             )
                                             Text(
                                                 text = "当前剩 $currentQtyCount$qtyUnit",
@@ -486,7 +490,7 @@ fun DetailScreen(
                                                     }
                                                 },
                                                 shape = RoundedCornerShape(10.dp),
-                                                colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                                                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                                 modifier = Modifier.height(34.dp)
                                             ) {
@@ -510,7 +514,7 @@ fun DetailScreen(
                                         navController.popBackStack()
                                     },
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -525,7 +529,7 @@ fun DetailScreen(
                                         navController.popBackStack()
                                     },
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = FreshGreenPrimary),
+                                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -539,7 +543,7 @@ fun DetailScreen(
                             OutlinedButton(
                                 onClick = { showDeleteConfirm = true },
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = UrgentRed),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = urgentColor),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -693,7 +697,7 @@ fun DetailScreen(
                         .size(48.dp),
                     shape = CircleShape,
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = FreshGreenPrimary,
+                        containerColor = primaryColor,
                         contentColor = Color.White
                     )
                 ) {

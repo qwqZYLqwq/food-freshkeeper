@@ -25,10 +25,7 @@ import androidx.navigation.NavHostController
 import com.food.freshkeeper.FoodViewModel
 import com.food.freshkeeper.SortOption
 import com.food.freshkeeper.ui.components.*
-import com.food.freshkeeper.ui.theme.FreshGreenContainer
-import com.food.freshkeeper.ui.theme.FreshGreenDark
-import com.food.freshkeeper.ui.theme.FreshGreenPrimary
-import com.food.freshkeeper.ui.theme.UrgentRed
+import com.food.freshkeeper.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +33,8 @@ fun ListScreen(
     navController: NavHostController,
     viewModel: FoodViewModel
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val primaryColor = if (isDark) DarkFrostPrimary else FreshGreenPrimary
     val foods by viewModel.filteredListFoods.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
@@ -87,7 +86,7 @@ fun ListScreen(
                             text = "已选 ${selectedFoodIds.size} 项",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
-                            color = FreshGreenPrimary
+                            color = primaryColor
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             TextButton(
@@ -102,7 +101,7 @@ fun ListScreen(
                             TextButton(
                                 onClick = { viewModel.exitBatchMode() }
                             ) {
-                                Text("完成", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = FreshGreenPrimary)
+                                Text("完成", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = primaryColor)
                             }
                         }
                     } else {
@@ -128,7 +127,7 @@ fun ListScreen(
                             TextButton(
                                 onClick = { viewModel.toggleBatchMode() }
                             ) {
-                                Text("批量管理", fontSize = 13.sp, color = FreshGreenPrimary, fontWeight = FontWeight.Medium)
+                                Text("批量管理", fontSize = 13.sp, color = primaryColor, fontWeight = FontWeight.Medium)
                             }
 
                             // 排序按钮
@@ -152,7 +151,7 @@ fun ListScreen(
                                                 Text(
                                                     text = option.title,
                                                     fontWeight = if (option == sortOption) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (option == sortOption) FreshGreenPrimary else MaterialTheme.colorScheme.onSurface
+                                                    color = if (option == sortOption) primaryColor else MaterialTheme.colorScheme.onSurface
                                                 )
                                             },
                                             onClick = {
@@ -194,7 +193,7 @@ fun ListScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        focusedBorderColor = FreshGreenPrimary,
+                        focusedBorderColor = primaryColor,
                         unfocusedBorderColor = Color.Transparent
                     ),
                     modifier = Modifier.fillMaxWidth()
@@ -223,8 +222,8 @@ fun ListScreen(
                             },
                             shape = RoundedCornerShape(10.dp),
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = FreshGreenPrimary,
-                                selectedLabelColor = Color.White,
+                                selectedContainerColor = primaryColor,
+                                selectedLabelColor = if (isDark) DarkBackground else Color.White,
                                 containerColor = MaterialTheme.colorScheme.surface,
                                 labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                             ),
@@ -281,7 +280,7 @@ fun ListScreen(
                             Text(
                                 text = "点击卡片勾选以批量删除",
                                 fontSize = 11.sp,
-                                color = FreshGreenPrimary
+                                color = primaryColor
                             )
                         }
                     }
@@ -318,7 +317,7 @@ fun ListScreen(
                 state = pullToRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter),
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = FreshGreenPrimary
+                contentColor = primaryColor
             )
         }
     }
