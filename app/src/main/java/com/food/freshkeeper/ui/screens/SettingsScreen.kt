@@ -6,6 +6,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -49,6 +50,8 @@ fun SettingsScreen(
     val trashFoods by viewModel.trashFoods.collectAsState()
     val serverUrl by viewModel.serverUrl.collectAsState()
     val autoSyncEnabled by viewModel.autoSyncEnabled.collectAsState()
+    val autoSyncUploadEnabled by viewModel.autoSyncUploadEnabled.collectAsState()
+    val autoSyncDownloadEnabled by viewModel.autoSyncDownloadEnabled.collectAsState()
     val lastSyncTimeMs by viewModel.lastSyncTimeMs.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val defaultReminderDays by viewModel.defaultReminderDays.collectAsState()
@@ -57,6 +60,8 @@ fun SettingsScreen(
 
     var inputServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
     var inputImageSavePath by remember(imageSavePath) { mutableStateOf(imageSavePath) }
+    var pendingAutoUpload by remember(autoSyncUploadEnabled) { mutableStateOf(autoSyncUploadEnabled) }
+    var pendingAutoDownload by remember(autoSyncDownloadEnabled) { mutableStateOf(autoSyncDownloadEnabled) }
 
     var showAddSampleDialog by remember { mutableStateOf(false) }
     var showClearExpiredDialog by remember { mutableStateOf(false) }
@@ -680,19 +685,19 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
-                // 自动同步开关
+                // 自动同步总开关
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "自动同步到云端",
+                            text = "开启自动同步",
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp
+                            fontSize = 14.sp
                         )
                         Text(
-                            text = "变更食材时静默上传，离线时完全正常使用",
+                            text = "后台智能处理食材变动同步，离线优先设计",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -714,6 +719,139 @@ fun SettingsScreen(
                             checkedTrackColor = primaryColor
                         )
                     )
+                }
+
+                // 自动同步细分选项与确认生效
+                AnimatedVisibility(visible = autoSyncEnabled) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "自动同步选项（二者至少选择一个）：",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        // 选项 1: 是否自动上传
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    val next = !pendingAutoUpload
+                                    if (!next && !pendingAutoDownload) {
+                                        Toast.makeText(context, "自动上传与自动下载二者至少选择一个", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        pendingAutoUpload = next
+                                    }
+                                }
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = pendingAutoUpload,
+                                onCheckedChange = { checked ->
+                                    if (!checked && !pendingAutoDownload) {
+                                        Toast.makeText(context, "自动上传与自动下载二者至少选择一个", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        pendingAutoUpload = checked
+                                    }
+                                },
+                                colors = CheckboxDefaults.colors(checkedColor = primaryColor)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "1. 是否自动上传",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "本地食材变动时自动上传至云端（自动同步不同步回收站）",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // 选项 2: 是否自动下载
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    val next = !pendingAutoDownload
+                                    if (!next && !pendingAutoUpload) {
+                                        Toast.makeText(context, "自动上传与自动下载二者至少选择一个", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        pendingAutoDownload = next
+                                    }
+                                }
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = pendingAutoDownload,
+                                onCheckedChange = { checked ->
+                                    if (!checked && !pendingAutoUpload) {
+                                        Toast.makeText(context, "自动上传与自动下载二者至少选择一个", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        pendingAutoDownload = checked
+                                    }
+                                },
+                                colors = CheckboxDefaults.colors(checkedColor = primaryColor)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "2. 是否自动下载",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "下拉刷新或启动应用时自动拉取云端新食材并显示新增提示",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        val isValid = pendingAutoUpload || pendingAutoDownload
+                        val hasChanges = pendingAutoUpload != autoSyncUploadEnabled || pendingAutoDownload != autoSyncDownloadEnabled
+
+                        Button(
+                            onClick = {
+                                if (!isValid) {
+                                    Toast.makeText(context, "自动上传与自动下载二者至少选择一个！", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    viewModel.setAutoSyncOptions(upload = pendingAutoUpload, download = pendingAutoDownload)
+                                    val uploadDesc = if (pendingAutoUpload) "自动上传[开]" else "自动上传[关]"
+                                    val downloadDesc = if (pendingAutoDownload) "自动下载[开]" else "自动下载[关]"
+                                    Toast.makeText(context, "自动同步配置已确认生效：$uploadDesc, $downloadDesc ✅", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            enabled = isValid,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (hasChanges) "确认生效 (待应用)" else "确认生效",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)

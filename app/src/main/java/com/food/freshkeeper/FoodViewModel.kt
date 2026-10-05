@@ -3,11 +3,13 @@ package com.food.freshkeeper
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.food.freshkeeper.data.*
 import com.food.freshkeeper.util.ImageSaver
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,6 +41,18 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
         false
+    )
+
+    val autoSyncUploadEnabled: StateFlow<Boolean> = settingsRepository.autoSyncUpload.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        true
+    )
+
+    val autoSyncDownloadEnabled: StateFlow<Boolean> = settingsRepository.autoSyncDownload.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        true
     )
 
     val lastSyncTimeMs: StateFlow<Long> = settingsRepository.lastSyncTimeMs.stateIn(
@@ -116,6 +130,40 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             SharingStarted.WhileSubscribed(5000),
             emptyList()
         )
+
+        // 启动时自动下载（若开启了自动同步且启用了自动下载）
+        viewModelScope.launch(Dispatchers.IO) {
+            delay(1200)
+            try {
+                val url = settingsRepository.serverUrl.first()
+                val enabled = settingsRepository.autoSyncEnabled.first()
+                val downloadEnabled = settingsRepository.autoSyncDownload.first()
+                if (enabled && downloadEnabled && url.isNotBlank()) {
+                    val imagesDir = getImagesDir()
+                    val result = syncClient.fetchFoods(url, imagesDir)
+                    if (result.isSuccess) {
+                        val remoteFoods = result.getOrNull() ?: emptyList()
+                        // 自动同步不同步回收站
+                        val localTrashIds = foodDao.getTrashFoodIdsSnapshot().toSet()
+                        val existingIds = foodDao.getAllFoodIdsSnapshot().toSet()
+                        val validRemoteFoods = remoteFoods.filter { !it.isDeleted && it.id !in localTrashIds }
+                        val newAddedFoods = validRemoteFoods.filter { it.id !in existingIds }
+                        val newCount = newAddedFoods.size
+                        if (validRemoteFoods.isNotEmpty()) {
+                            foodDao.insertAll(validRemoteFoods)
+                            settingsRepository.setLastSyncTime(System.currentTimeMillis())
+                        }
+                        if (newCount > 0) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(getApplication(), "同步完成，新增加了 ${newCount} 种食材", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // 静默忽略
+            }
+        }
     }
 
     // 临期食品 (根据设置中的预警阈值天数动态筛选)
@@ -395,8 +443,10 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val url = serverUrl.value
                 val enabled = autoSyncEnabled.value
-                if (!enabled || url.isBlank()) return@launch
-                val snapshot = foodDao.getAllFoodItemsSnapshot()
+                val uploadEnabled = autoSyncUploadEnabled.value
+                if (!enabled || !uploadEnabled || url.isBlank()) return@launch
+                // 自动同步不同步回收站：仅上传未被删除的食材
+                val snapshot = foodDao.getNonDeletedFoodItemsSnapshot()
                 val result = syncClient.uploadFoods(url, snapshot, getImagesDir())
                 if (result.isSuccess) {
                     settingsRepository.setLastSyncTime(System.currentTimeMillis())
@@ -408,7 +458,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * 下拉刷新：重新刷新本地状态并在开启同步时静默同步
+     * 下拉刷新：重新刷新本地状态并在开启同步且允许自动下载时静默同步
      */
     fun refreshData(onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
@@ -416,21 +466,35 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val url = serverUrl.value
                 val enabled = autoSyncEnabled.value
-                if (enabled && url.isNotBlank()) {
+                val downloadEnabled = autoSyncDownloadEnabled.value
+                if (enabled && downloadEnabled && url.isNotBlank()) {
                     withContext(Dispatchers.IO) {
                         val imagesDir = getImagesDir()
                         val result = syncClient.fetchFoods(url, imagesDir)
                         if (result.isSuccess) {
                             val remoteFoods = result.getOrNull() ?: emptyList()
-                            foodDao.insertAll(remoteFoods)
+                            // 自动同步不同步回收站
+                            val localTrashIds = foodDao.getTrashFoodIdsSnapshot().toSet()
+                            val existingIds = foodDao.getAllFoodIdsSnapshot().toSet()
+                            val validRemoteFoods = remoteFoods.filter { !it.isDeleted && it.id !in localTrashIds }
+                            val newAddedFoods = validRemoteFoods.filter { it.id !in existingIds }
+                            val newCount = newAddedFoods.size
+                            if (validRemoteFoods.isNotEmpty()) {
+                                foodDao.insertAll(validRemoteFoods)
+                            }
                             settingsRepository.setLastSyncTime(System.currentTimeMillis())
+                            
+                            // 同步后的提示显示新增加了多少食材
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(getApplication(), "同步完成，新增加了 ${newCount} 种食材", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 }
             } catch (e: Exception) {
                 // 静默忽略
             } finally {
-                kotlinx.coroutines.delay(350)
+                delay(350)
                 isRefreshing.value = false
                 onComplete?.invoke()
             }
@@ -447,6 +511,12 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     fun setAutoSyncEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setAutoSyncEnabled(enabled)
+        }
+    }
+
+    fun setAutoSyncOptions(upload: Boolean, download: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setAutoSyncOptions(upload, download)
         }
     }
 
@@ -568,6 +638,10 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 val result = syncClient.fetchFoods(url, imagesDir)
                 if (result.isSuccess) {
                     val remoteFoods = result.getOrNull() ?: emptyList()
+                    val existingIds = withContext(Dispatchers.IO) { foodDao.getAllFoodIdsSnapshot().toSet() }
+                    val newAddedFoods = remoteFoods.filter { it.id !in existingIds }
+                    val newCount = newAddedFoods.size
+
                     withContext(Dispatchers.IO) {
                         foodDao.insertAll(remoteFoods)
                     }
@@ -578,7 +652,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                     val activeCount = remoteFoods.count { !it.isConsumed && !it.isDeleted }
                     val consumedCount = remoteFoods.count { it.isConsumed && !it.isDeleted }
                     val trashCount = remoteFoods.count { it.isDeleted }
-                    val msg = "同步成功！已恢复 ${remoteFoods.size} 项食材 (在库 $activeCount 项, 已食用 $consumedCount 项, 回收站 $trashCount 项) 📥"
+                    val msg = "同步完成，新增加了 ${newCount} 种食材 (共拉取 ${remoteFoods.size} 项：在库 $activeCount 项, 已食用 $consumedCount 项, 回收站 $trashCount 项) 📥"
                     onResult(true, msg)
                 } else {
                     isSyncing.value = false

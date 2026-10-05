@@ -87,6 +87,37 @@ fun HomeScreen(
         )
     }
 
+    // 主页删除二级确认弹窗
+    var foodToDelete by remember { mutableStateOf<FoodItem?>(null) }
+    if (foodToDelete != null) {
+        val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+        val urgentColor = if (isDark) DarkUrgentRed else UrgentRed
+        AlertDialog(
+            onDismissRequest = { foodToDelete = null },
+            title = { Text("移入回收站？", fontWeight = FontWeight.Bold) },
+            text = { Text("「${foodToDelete!!.name}」将被移入回收站，随时可在回收站中恢复，不影响当前新鲜度统计。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val target = foodToDelete
+                        foodToDelete = null
+                        if (target != null) {
+                            viewModel.moveToTrash(target)
+                            Toast.makeText(context, "已将「${target.name}」移入回收站", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                ) {
+                    Text("移入回收站", color = urgentColor, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { foodToDelete = null }) {
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        )
+    }
+
     Scaffold(
         floatingActionButton = {
             FreshKeeperFAB(
@@ -264,7 +295,7 @@ fun HomeScreen(
                             food = food,
                             onClick = { navController.navigate("detail/${food.id}") },
                             onConsumeClick = { viewModel.requestConsume(food) },
-                            onDeleteClick = { viewModel.moveToTrash(food) }
+                            onDeleteClick = { foodToDelete = food }
                         )
                     }
                 }

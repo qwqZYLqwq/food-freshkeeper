@@ -23,6 +23,8 @@ class SettingsRepository(private val context: Context) {
     companion object {
         val KEY_SERVER_URL = stringPreferencesKey("server_url")
         val KEY_AUTO_SYNC_ENABLED = booleanPreferencesKey("auto_sync_enabled")
+        val KEY_AUTO_SYNC_UPLOAD = booleanPreferencesKey("auto_sync_upload")
+        val KEY_AUTO_SYNC_DOWNLOAD = booleanPreferencesKey("auto_sync_download")
         val KEY_LAST_SYNC_TIME_MS = longPreferencesKey("last_sync_time_ms")
         val KEY_DEFAULT_REMINDER_DAYS = intPreferencesKey("default_reminder_days")
         val KEY_NOTIFICATION_ENABLED = booleanPreferencesKey("notification_enabled")
@@ -66,6 +68,30 @@ class SettingsRepository(private val context: Context) {
         }
         .map { preferences ->
             preferences[KEY_AUTO_SYNC_ENABLED] ?: false
+        }
+
+    val autoSyncUpload: Flow<Boolean> = context.settingsDataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences ->
+            preferences[KEY_AUTO_SYNC_UPLOAD] ?: true
+        }
+
+    val autoSyncDownload: Flow<Boolean> = context.settingsDataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences ->
+            preferences[KEY_AUTO_SYNC_DOWNLOAD] ?: true
         }
 
     val lastSyncTimeMs: Flow<Long> = context.settingsDataStore.data
@@ -121,6 +147,15 @@ class SettingsRepository(private val context: Context) {
     suspend fun setAutoSyncEnabled(enabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[KEY_AUTO_SYNC_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setAutoSyncOptions(upload: Boolean, download: Boolean) {
+        val finalUpload = if (!upload && !download) true else upload
+        val finalDownload = if (!upload && !download) false else download
+        context.settingsDataStore.edit { preferences ->
+            preferences[KEY_AUTO_SYNC_UPLOAD] = finalUpload
+            preferences[KEY_AUTO_SYNC_DOWNLOAD] = finalDownload
         }
     }
 
