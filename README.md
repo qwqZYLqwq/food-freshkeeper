@@ -246,8 +246,28 @@ PORT=8099 ./start.sh
 
 ---
 
+## 🔨 源码构建指南 (Build from Source)
+
+本项目保持完全纯净的工程结构，克隆后即可直接通过 Gradle 构建：
+
+```bash
+git clone https://github.com/qwqZYLqwq/food-freshkeeper.git
+cd food-freshkeeper
+
+# Windows 平台构建 Release APK
+.\gradlew.bat assembleRelease
+
+# Linux / macOS 平台构建 Release APK
+chmod +x gradlew
+./gradlew assembleRelease
+```
+
+编译生成的安装包位于：`app/build/outputs/apk/release/app-release.apk`。
+
+---
+
 ## 📦 下载安装与在线预览
  
-- **正式版安装包**：前往 [Releases 页面](https://github.com/qwqZYLqwq/food-freshkeeper/releases/tag/v1.8.0) 下载最新版本 `鲜食记_v1.8.0.apk` 即可直接在 Android 手机上安装体验。
+- **正式版安装包**：前往 [Releases 页面](https://github.com/qwqZYLqwq/food-freshkeeper/releases) 下载最新版本安装包即可在 Android 手机上直接体验。
 - **PC 端无缝预览**：直接在浏览器中打开项目内的 [`preview/index.html`](preview/index.html)，即可体验 1:1 高保真手机交互原型与液态玻璃底栏效果。
 

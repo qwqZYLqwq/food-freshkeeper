@@ -25,4 +25,10 @@ PROJECT.md
 TEST_INFRA.md
 TEST_READY.md
 *.db
-升级.txt
+升级*.txt
+升级/
+1.jpg
+ui.xml
+*.apk
+*.aab
+*.log
