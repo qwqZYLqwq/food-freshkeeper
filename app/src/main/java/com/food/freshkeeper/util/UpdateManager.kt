@@ -24,76 +24,127 @@ object UpdateManager {
     const val GITHUB_RELEASE_PAGE = "https://github.com/qwqZYLqwq/food-freshkeeper/releases"
     const val GITHUB_PROFILE_URL = "https://github.com/qwqZYLqwq"
     const val GITHUB_REPO_URL = "https://github.com/qwqZYLqwq/food-freshkeeper"
-    const val GITHUB_CONTRIBUTORS_URL = "https://github.com/qwqZYLqwq/food-freshkeeper/graphs/contributors"
-    const val GITHUB_ISSUES_URL = "https://github.com/qwqZYLqwq/food-freshkeeper/issues"
+
+    // GitHub 国内高速加速镜像前缀
+    const val GH_PROXY_PREFIX = "https://ghproxy.net/"
+    const val GH_FAST_PREFIX = "https://ghfast.top/"
 
     private var activeDownloadId: Long? = null
 
-    suspend fun checkAndDownload(
-        context: Context,
-        onStart: (String) -> Unit = {},
-        onError: (String) -> Unit = {}
-    ) {
-        withContext(Dispatchers.IO) {
-            try {
-                var downloadUrl = FALLBACK_APK_URL
-                var releaseVersion = "v1.9.0"
-                try {
-                    val conn = (URL(GITHUB_REPO_API).openConnection() as HttpURLConnection).apply {
-                        connectTimeout = 8000
-                        readTimeout = 8000
-                        setRequestProperty("Accept", "application/vnd.github.v3+json")
-                    }
-                    if (conn.responseCode in 200..299) {
-                        val response = conn.inputStream.bufferedReader().use { it.readText() }
-                        conn.disconnect()
-                        val json = JSONObject(response)
-                        releaseVersion = json.optString("tag_name", "v1.9.0")
-                        val assets = json.optJSONArray("assets")
-                        if (assets != null && assets.length() > 0) {
-                            for (i in 0 until assets.length()) {
-                                val asset = assets.getJSONObject(i)
-                                val name = asset.optString("name", "")
-                                if (name.endsWith(".apk", ignoreCase = true)) {
-                                    val assetUrl = asset.optString("browser_download_url")
-                                    if (assetUrl.isNotBlank()) {
-                                        downloadUrl = assetUrl
-                                        break
-                                    }
-                                }
+    data class UpdateCheckInfo(
+        val isLatest: Boolean,
+        val currentVersion: String,
+        val latestVersion: String,
+        val acceleratedDownloadUrl: String,
+        val rawDownloadUrl: String,
+        val releaseNotes: String
+    )
+
+    /**
+     * 版本号比较：检查 remote 是否比 current 新
+     */
+    fun isNewerVersion(current: String, remote: String): Boolean {
+        val cleanCurrent = current.trim().removePrefix("v").removePrefix("V")
+        val cleanRemote = remote.trim().removePrefix("v").removePrefix("V")
+
+        val currentParts = cleanCurrent.split(".").mapNotNull { it.toIntOrNull() }
+        val remoteParts = cleanRemote.split(".").mapNotNull { it.toIntOrNull() }
+
+        val maxLen = maxOf(currentParts.size, remoteParts.size)
+        for (i in 0 until maxLen) {
+            val curr = currentParts.getOrElse(i) { 0 }
+            val rem = remoteParts.getOrElse(i) { 0 }
+            if (rem > curr) return true
+            if (rem < curr) return false
+        }
+        return false
+    }
+
+    /**
+     * 将标准 GitHub 下载链接转换为高速加速路线
+     */
+    fun getAcceleratedUrl(rawUrl: String): String {
+        val trimmed = rawUrl.trim()
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            return "${GH_PROXY_PREFIX}$trimmed"
+        }
+        return "${GH_PROXY_PREFIX}https://github.com/$trimmed"
+    }
+
+    /**
+     * 检测云端版本并返回新版本信息与加速下载直链
+     */
+    suspend fun checkVersion(currentVersion: String = "1.9.0"): Result<UpdateCheckInfo> = withContext(Dispatchers.IO) {
+        try {
+            var rawDownloadUrl = FALLBACK_APK_URL
+            var releaseVersion = "v1.9.0"
+            var releaseNotes = ""
+
+            val conn = (URL(GITHUB_REPO_API).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 8000
+                readTimeout = 8000
+                setRequestProperty("Accept", "application/vnd.github.v3+json")
+                setRequestProperty("User-Agent", "FoodFreshKeeper-App")
+            }
+
+            if (conn.responseCode in 200..299) {
+                val response = conn.inputStream.bufferedReader().use { it.readText() }
+                conn.disconnect()
+                val json = JSONObject(response)
+                releaseVersion = json.optString("tag_name", "v1.9.0")
+                releaseNotes = json.optString("body", "常规体验优化与性能改进")
+
+                val assets = json.optJSONArray("assets")
+                if (assets != null && assets.length() > 0) {
+                    for (i in 0 until assets.length()) {
+                        val asset = assets.getJSONObject(i)
+                        val name = asset.optString("name", "")
+                        if (name.endsWith(".apk", ignoreCase = true)) {
+                            val assetUrl = asset.optString("browser_download_url")
+                            if (assetUrl.isNotBlank()) {
+                                rawDownloadUrl = assetUrl
+                                break
                             }
                         }
-                    } else {
-                        conn.disconnect()
                     }
-                } catch (e: Exception) {
-                    // 使用兜底发布地址
                 }
-
-                withContext(Dispatchers.Main) {
-                    startDownload(context, downloadUrl, releaseVersion)
-                    onStart(releaseVersion)
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    onError(e.message ?: "下载启动失败")
-                }
+            } else {
+                conn.disconnect()
             }
+
+            val hasNew = isNewerVersion(currentVersion, releaseVersion)
+            val acceleratedUrl = getAcceleratedUrl(rawDownloadUrl)
+
+            Result.success(
+                UpdateCheckInfo(
+                    isLatest = !hasNew,
+                    currentVersion = currentVersion,
+                    latestVersion = releaseVersion,
+                    acceleratedDownloadUrl = acceleratedUrl,
+                    rawDownloadUrl = rawDownloadUrl,
+                    releaseNotes = releaseNotes
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    fun startDownload(context: Context, downloadUrl: String, releaseVersion: String) {
+    /**
+     * 调起系统 DownloadManager 通过 GitHub 加速路线下载更新并在通知栏显示进度
+     */
+    fun startAcceleratedDownload(context: Context, acceleratedUrl: String, releaseVersion: String) {
         val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
         if (dm == null) {
-            openInBrowser(context, downloadUrl)
+            openInBrowser(context, acceleratedUrl)
             return
         }
 
         try {
             val fileName = "FoodFreshKeeper_${releaseVersion}.apk"
-            val request = DownloadManager.Request(Uri.parse(downloadUrl)).apply {
+            val request = DownloadManager.Request(Uri.parse(acceleratedUrl)).apply {
                 setTitle("鲜食记 - 下载更新 ($releaseVersion)")
-                setDescription("正在下载新版本安装包，进度可在通知栏查看...")
+                setDescription("已启用 GitHub 高速加速路线，下载进度可在通知栏查看...")
                 setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
                 setMimeType("application/vnd.android.package-archive")
@@ -103,12 +154,12 @@ object UpdateManager {
 
             val downloadId = dm.enqueue(request)
             activeDownloadId = downloadId
-            Toast.makeText(context, "已在通知栏启动下载更新 📥\n版本: $releaseVersion", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "已通过 GitHub 加速路线启动下载 ⚡\n进度请在通知栏查看", Toast.LENGTH_LONG).show()
 
             registerDownloadCompleteReceiver(context.applicationContext, downloadId, fileName)
         } catch (e: Exception) {
-            Toast.makeText(context, "下载服务调用失败，正在打开浏览器下载...", Toast.LENGTH_SHORT).show()
-            openInBrowser(context, downloadUrl)
+            Toast.makeText(context, "下载服务调用异常，正在为您打开浏览器下载...", Toast.LENGTH_SHORT).show()
+            openInBrowser(context, acceleratedUrl)
         }
     }
 

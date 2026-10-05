@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.food.freshkeeper.R
 import com.food.freshkeeper.FoodViewModel
 import com.food.freshkeeper.ui.theme.*
 import com.food.freshkeeper.util.ImageSaver
@@ -74,6 +76,8 @@ fun SettingsScreen(
     var showRestoreDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     var isDownloadingUpdate by remember { mutableStateOf(false) }
+    var updateCheckInfo by remember { mutableStateOf<UpdateManager.UpdateCheckInfo?>(null) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -201,6 +205,69 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { showRestoreDialog = false }) {
                     Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        )
+    }
+
+    if (showUpdateDialog && updateCheckInfo != null) {
+        val info = updateCheckInfo!!
+        AlertDialog(
+            onDismissRequest = { showUpdateDialog = false },
+            title = {
+                Text(
+                    text = if (info.isLatest) "已是最新版本 🎉" else "发现新版本 ${info.latestVersion} 🚀",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = if (info.isLatest) {
+                            "当前使用的鲜食记 (v${info.currentVersion}) 已经是最新版，暂无更新。\n(云端最新发布: ${info.latestVersion})"
+                        } else {
+                            "检测到新版本发布！\n当前版本: v${info.currentVersion}\n最新版本: ${info.latestVersion}"
+                        },
+                        fontSize = 13.sp
+                    )
+                    if (!info.isLatest && info.releaseNotes.isNotBlank()) {
+                        Text(
+                            text = "更新说明：\n${info.releaseNotes.take(160)}...",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text(
+                        text = "⚡ 下载将自动采用 GitHub 国内高速加速通道，并在系统通知栏显示实时下载进度。",
+                        fontSize = 11.sp,
+                        color = primaryColor
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showUpdateDialog = false
+                        UpdateManager.startAcceleratedDownload(
+                            context = context,
+                            acceleratedUrl = info.acceleratedDownloadUrl,
+                            releaseVersion = info.latestVersion
+                        )
+                    }
+                ) {
+                    Text(
+                        text = if (info.isLatest) "重新下载安装包 (加速通道)" else "立即加速下载",
+                        fontWeight = FontWeight.Bold,
+                        color = primaryColor
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUpdateDialog = false }) {
+                    Text(
+                        text = if (info.isLatest) "知道了" else "稍后再说",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         )
@@ -994,7 +1061,7 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 圆形头像
+                // 圆形头像 (使用 GitHub 头像，内置离线资源兜底)
                 Box(
                     modifier = Modifier
                         .size(54.dp)
@@ -1003,8 +1070,14 @@ fun SettingsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     AsyncImage(
-                        model = "https://github.com/qwqZYLqwq.png",
-                        contentDescription = "作者头像",
+                        model = ImageRequest.Builder(context)
+                            .data("https://avatars.githubusercontent.com/u/110767171?v=4")
+                            .placeholder(R.drawable.author_github_avatar)
+                            .error(R.drawable.author_github_avatar)
+                            .fallback(R.drawable.author_github_avatar)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "作者 GitHub 头像",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -1014,7 +1087,7 @@ fun SettingsScreen(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "qwqZYLqwq | awaZYLawa",
+                        text = "awaZYLawa",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -1036,7 +1109,7 @@ fun SettingsScreen(
             }
         }
 
-        // 7. 社区与支持列表卡片 (参考 1.jpg 格式 + 下载更新)
+        // 7. 开源主页与检查更新 (已移除贡献者、翻译、支持)
         Surface(
             shape = RoundedCornerShape(18.dp),
             color = MaterialTheme.colorScheme.surface,
@@ -1049,51 +1122,34 @@ fun SettingsScreen(
                     .padding(vertical = 6.dp)
             ) {
                 AuthorOptionItem(
-                    title = "贡献者",
-                    onClick = { UpdateManager.openInBrowser(context, UpdateManager.GITHUB_CONTRIBUTORS_URL) }
-                )
-
-                AuthorOptionItem(
                     title = "官方网站",
+                    subtitle = "访问 GitHub 项目开源主页",
                     onClick = { UpdateManager.openInBrowser(context, UpdateManager.GITHUB_REPO_URL) }
                 )
 
+                // 检查与下载更新 (先检测版本，再走高速加速通道)
                 AuthorOptionItem(
-                    title = "翻译",
-                    subtitle = "帮助我们将应用翻译为您的语言",
-                    onClick = { UpdateManager.openInBrowser(context, UpdateManager.GITHUB_ISSUES_URL) }
-                )
-
-                AuthorOptionItem(
-                    title = "支持",
-                    subtitle = "您可以在此处捐赠以支持我们",
-                    onClick = { UpdateManager.openInBrowser(context, UpdateManager.GITHUB_PROFILE_URL) }
-                )
-
-                // 下载更新
-                AuthorOptionItem(
-                    title = "下载更新",
-                    subtitle = if (isDownloadingUpdate) "正在启动下载，请在通知栏查看进度..." else "当前版本 v1.9.0 · 下载进度显示在通知栏",
+                    title = "检查与下载更新",
+                    subtitle = if (isDownloadingUpdate) "正在检测云端版本..." else "当前版本 v1.9.0 · 先比对版本，后走加速路线",
                     showProgress = isDownloadingUpdate,
                     primaryColor = primaryColor,
                     onClick = {
                         if (isDownloadingUpdate) {
-                            Toast.makeText(context, "正在下载中，请在通知栏查看进度...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "正在检测或下载中，请稍候...", Toast.LENGTH_SHORT).show()
                             return@AuthorOptionItem
                         }
                         isDownloadingUpdate = true
-                        Toast.makeText(context, "正在查询最新版本并启动下载...", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "正在检测 GitHub 最新发布版本...", Toast.LENGTH_SHORT).show()
                         coroutineScope.launch {
-                            UpdateManager.checkAndDownload(
-                                context = context,
-                                onStart = {
-                                    isDownloadingUpdate = false
-                                },
-                                onError = { errorMsg ->
-                                    isDownloadingUpdate = false
-                                    Toast.makeText(context, "下载启动失败: $errorMsg", Toast.LENGTH_SHORT).show()
-                                }
-                            )
+                            val result = UpdateManager.checkVersion("1.9.0")
+                            isDownloadingUpdate = false
+                            val checkInfo = result.getOrNull()
+                            if (checkInfo != null) {
+                                updateCheckInfo = checkInfo
+                                showUpdateDialog = true
+                            } else {
+                                Toast.makeText(context, "检测版本失败，请检查网络或点击官方网站查看", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 )
