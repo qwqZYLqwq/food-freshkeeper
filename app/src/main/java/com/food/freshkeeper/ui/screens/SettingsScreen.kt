@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -33,9 +35,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.food.freshkeeper.FoodViewModel
 import com.food.freshkeeper.ui.theme.*
 import com.food.freshkeeper.util.ImageSaver
+import com.food.freshkeeper.util.UpdateManager
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -67,6 +72,8 @@ fun SettingsScreen(
     var showClearExpiredDialog by remember { mutableStateOf(false) }
     var showClearConsumedDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    var isDownloadingUpdate by remember { mutableStateOf(false) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -954,7 +961,7 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "版本 v1.8.0 · 现代扁平设计",
+                    text = "版本 v1.9.0 · 现代扁平设计",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -966,6 +973,129 @@ fun SettingsScreen(
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // 6. 作者个人信息卡片 (参考 1.jpg 样式)
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    UpdateManager.openInBrowser(context, UpdateManager.GITHUB_PROFILE_URL)
+                }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 圆形头像
+                Box(
+                    modifier = Modifier
+                        .size(54.dp)
+                        .clip(CircleShape)
+                        .background(if (isDark) DarkSurfaceVariant else MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = "https://github.com/qwqZYLqwq.png",
+                        contentDescription = "作者头像",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "qwqZYLqwq | awaZYLawa",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "@qwqZYLqwq",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        // 7. 社区与支持列表卡片 (参考 1.jpg 格式 + 下载更新)
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp)
+            ) {
+                AuthorOptionItem(
+                    title = "贡献者",
+                    onClick = { UpdateManager.openInBrowser(context, UpdateManager.GITHUB_CONTRIBUTORS_URL) }
+                )
+
+                AuthorOptionItem(
+                    title = "官方网站",
+                    onClick = { UpdateManager.openInBrowser(context, UpdateManager.GITHUB_REPO_URL) }
+                )
+
+                AuthorOptionItem(
+                    title = "翻译",
+                    subtitle = "帮助我们将应用翻译为您的语言",
+                    onClick = { UpdateManager.openInBrowser(context, UpdateManager.GITHUB_ISSUES_URL) }
+                )
+
+                AuthorOptionItem(
+                    title = "支持",
+                    subtitle = "您可以在此处捐赠以支持我们",
+                    onClick = { UpdateManager.openInBrowser(context, UpdateManager.GITHUB_PROFILE_URL) }
+                )
+
+                // 下载更新
+                AuthorOptionItem(
+                    title = "下载更新",
+                    subtitle = if (isDownloadingUpdate) "正在启动下载，请在通知栏查看进度..." else "当前版本 v1.9.0 · 下载进度显示在通知栏",
+                    showProgress = isDownloadingUpdate,
+                    primaryColor = primaryColor,
+                    onClick = {
+                        if (isDownloadingUpdate) {
+                            Toast.makeText(context, "正在下载中，请在通知栏查看进度...", Toast.LENGTH_SHORT).show()
+                            return@AuthorOptionItem
+                        }
+                        isDownloadingUpdate = true
+                        Toast.makeText(context, "正在查询最新版本并启动下载...", Toast.LENGTH_SHORT).show()
+                        coroutineScope.launch {
+                            UpdateManager.checkAndDownload(
+                                context = context,
+                                onStart = {
+                                    isDownloadingUpdate = false
+                                },
+                                onError = { errorMsg ->
+                                    isDownloadingUpdate = false
+                                    Toast.makeText(context, "下载启动失败: $errorMsg", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                    }
                 )
             }
         }
@@ -1004,6 +1134,55 @@ private fun SettingActionRow(
             Text(text = subtitle, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(18.dp))
+    }
+}
+
+@Composable
+private fun AuthorOptionItem(
+    title: String,
+    subtitle: String? = null,
+    showProgress: Boolean = false,
+    primaryColor: Color = MaterialTheme.colorScheme.primary,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (!subtitle.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        if (showProgress) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = primaryColor
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 
